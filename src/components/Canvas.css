@@ -1,0 +1,7 @@
+.Canvas {
+  display: flex;
+}
+
+.Canvas > canvas {
+  margin: auto;
+}
