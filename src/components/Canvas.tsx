@@ -18,6 +18,7 @@ interface IState {
   renderGrid: RenderGrid
   mousePosition: Point
   mouseDown: boolean
+  mouseHover: boolean
 }
 
 export default class Canvas extends Component<IProps, IState> {
@@ -41,6 +42,7 @@ export default class Canvas extends Component<IProps, IState> {
     this.state = {
       renderGrid,
       mousePosition: { x: 0, y: 0 },
+      mouseHover: false,
       mouseDown: false
     }
   }
@@ -69,8 +71,20 @@ export default class Canvas extends Component<IProps, IState> {
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
     if (posChanged) {
-      this.setState({ ...this.state, mousePosition: { x, y } })
+      this.setState({
+        ...this.state,
+        mousePosition: { x, y },
+        mouseHover: true
+      })
     }
+  }
+
+  handleMouseEnter() {
+    this.setState({ ...this.state, mouseHover: true })
+  }
+
+  handleMouseExit() {
+    this.setState({ ...this.state, mouseHover: false })
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -137,7 +151,7 @@ export default class Canvas extends Component<IProps, IState> {
   }
 
   drawMousePointer() {
-    if (this.ctx !== null) {
+    if (this.ctx !== null && this.state.mouseHover) {
       this.ctx.beginPath()
       this.ctx.fillStyle = '#333'
 
@@ -170,6 +184,9 @@ export default class Canvas extends Component<IProps, IState> {
           width={width}
           height={height}
           onMouseMove={this.handleMouseMove.bind(this)}
+          onMouseEnter={this.handleMouseEnter.bind(this)}
+          onMouseLeave={this.handleMouseExit.bind(this)}
+          onMouseOut={this.handleMouseExit.bind(this)}
         />
       </div>
     )
