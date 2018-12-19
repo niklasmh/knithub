@@ -1,8 +1,9 @@
-import React, { Component } from 'react'
+import React, { Component, EventHandler } from 'react'
 import './Canvas.css'
 import { Grid } from '../models/grid'
 import { Layer } from '../models/layer'
 import { Color } from '../models/color'
+import { Point } from '../models/point'
 
 interface IProps {
   grid: Grid
@@ -15,6 +16,8 @@ type RenderGrid = RenderGridElement[][]
 
 interface IState {
   renderGrid: RenderGrid
+  mousePosition: Point
+  mouseDown: boolean
 }
 
 export default class Canvas extends Component<IProps, IState> {
@@ -36,7 +39,9 @@ export default class Canvas extends Component<IProps, IState> {
     renderGrid[2][2] = { value: 'green' }
 
     this.state = {
-      renderGrid
+      renderGrid,
+      mousePosition: { x: 0, y: 0 },
+      mouseDown: false
     }
   }
 
@@ -52,6 +57,20 @@ export default class Canvas extends Component<IProps, IState> {
   componentWillUnmount() {
     this.canvas = null
     this.ctx = null
+  }
+
+  handleMouseMove(evt: any) {
+    const rect: any = evt.target.getBoundingClientRect()
+    const stepSizeX: number = this.props.width / this.props.grid.width
+    const stepSizeY: number = this.props.height / this.props.grid.height
+    const x: number = Math.floor((evt.clientX - rect.left) / stepSizeX)
+    const y: number = Math.floor((evt.clientY - rect.top) / stepSizeY)
+
+    const posChanged: boolean =
+      this.state.mousePosition.x != x || this.state.mousePosition.y != y
+    if (posChanged) {
+      this.setState({ ...this.state, mousePosition: { x, y } })
+    }
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -117,12 +136,27 @@ export default class Canvas extends Component<IProps, IState> {
     }
   }
 
+  drawMousePointer() {
+    if (this.ctx !== null) {
+      this.ctx.beginPath()
+      this.ctx.fillStyle = '#333'
+
+      const stepSizeX: number = this.props.width / this.props.grid.width
+      const stepSizeY: number = this.props.height / this.props.grid.height
+      const pos: Point = this.state.mousePosition
+      this.ctx.rect(pos.x * stepSizeX, pos.y * stepSizeY, stepSizeX, stepSizeY)
+
+      this.ctx.fill()
+    }
+  }
+
   draw() {
     if (this.ctx !== null) {
       this.ctx.fillStyle = 'black'
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
       this.drawMasks(this.props.grid, this.state.renderGrid)
       this.drawGrid(this.props.grid)
+      this.drawMousePointer()
     }
   }
 
@@ -131,7 +165,12 @@ export default class Canvas extends Component<IProps, IState> {
 
     return (
       <div className="Canvas">
-        <canvas ref={e => (this.canvas = e)} width={width} height={height} />
+        <canvas
+          ref={e => (this.canvas = e)}
+          width={width}
+          height={height}
+          onMouseMove={this.handleMouseMove.bind(this)}
+        />
       </div>
     )
   }
