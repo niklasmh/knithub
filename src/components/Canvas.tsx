@@ -17,6 +17,8 @@ type RenderGrid = RenderGridElement[][]
 interface IState {
   renderGrid: RenderGrid
   mousePosition: Point
+  mouseDownPosition: Point
+  mouseUpPosition: Point
   mouseDown: boolean
   mouseHover: boolean
 }
@@ -41,9 +43,11 @@ export default class Canvas extends Component<IProps, IState> {
 
     this.state = {
       renderGrid,
-      mousePosition: { x: 0, y: 0 },
+      mousePosition: { x: -1, y: -1 },
       mouseHover: false,
-      mouseDown: false
+      mouseDown: false,
+      mouseDownPosition: { x: -1, y: -1 },
+      mouseUpPosition: { x: -1, y: -1 }
     }
   }
 
@@ -61,12 +65,20 @@ export default class Canvas extends Component<IProps, IState> {
     this.ctx = null
   }
 
-  handleMouseMove(evt: any) {
+  getPositionFromMouse(evt: any): Point {
     const rect: any = evt.target.getBoundingClientRect()
     const stepSizeX: number = this.props.width / this.props.grid.width
     const stepSizeY: number = this.props.height / this.props.grid.height
     const x: number = Math.floor((evt.clientX - rect.left) / stepSizeX)
     const y: number = Math.floor((evt.clientY - rect.top) / stepSizeY)
+
+    return { x, y }
+  }
+
+  handleMouseMove(evt: any) {
+    const position: Point = this.getPositionFromMouse(evt)
+    const x: number = position.x
+    const y: number = position.y
 
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
@@ -85,6 +97,26 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleMouseExit() {
     this.setState({ ...this.state, mouseHover: false })
+  }
+
+  handleMouseDown(evt: any) {
+    const position: Point = this.getPositionFromMouse(evt)
+    const x: number = position.x
+    const y: number = position.y
+
+    this.setState({
+      ...this.state,
+      mouseDown: true,
+      mouseDownPosition: { x, y }
+    })
+  }
+
+  handleMouseUp(evt: any) {
+    const position: Point = this.getPositionFromMouse(evt)
+    const x: number = position.x
+    const y: number = position.y
+
+    this.setState({ ...this.state, mouseDown: true, mouseUpPosition: { x, y } })
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -157,8 +189,51 @@ export default class Canvas extends Component<IProps, IState> {
 
       const stepSizeX: number = this.props.width / this.props.grid.width
       const stepSizeY: number = this.props.height / this.props.grid.height
-      const pos: Point = this.state.mousePosition
-      this.ctx.rect(pos.x * stepSizeX, pos.y * stepSizeY, stepSizeX, stepSizeY)
+      const position: Point = this.state.mousePosition
+      this.ctx.rect(
+        position.x * stepSizeX,
+        position.y * stepSizeY,
+        stepSizeX,
+        stepSizeY
+      )
+
+      this.ctx.fill()
+    }
+  }
+
+  drawControlPoints() {
+    if (this.ctx !== null) {
+      this.ctx.beginPath()
+      this.ctx.fillStyle = '#666'
+
+      const stepSizeX: number = this.props.width / this.props.grid.width
+      const stepSizeY: number = this.props.height / this.props.grid.height
+
+      if (
+        this.state.mouseDownPosition.x >= 0 &&
+        this.state.mouseDownPosition.y >= 0
+      ) {
+        const downPosition: Point = this.state.mouseDownPosition
+        this.ctx.rect(
+          downPosition.x * stepSizeX,
+          downPosition.y * stepSizeY,
+          stepSizeX,
+          stepSizeY
+        )
+      }
+
+      if (
+        this.state.mouseUpPosition.x >= 0 &&
+        this.state.mouseUpPosition.y >= 0
+      ) {
+        const upPosition: Point = this.state.mouseUpPosition
+        this.ctx.rect(
+          upPosition.x * stepSizeX,
+          upPosition.y * stepSizeY,
+          stepSizeX,
+          stepSizeY
+        )
+      }
 
       this.ctx.fill()
     }
@@ -170,6 +245,7 @@ export default class Canvas extends Component<IProps, IState> {
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
       this.drawMasks(this.props.grid, this.state.renderGrid)
       this.drawGrid(this.props.grid)
+      this.drawControlPoints()
       this.drawMousePointer()
     }
   }
@@ -187,6 +263,8 @@ export default class Canvas extends Component<IProps, IState> {
           onMouseEnter={this.handleMouseEnter.bind(this)}
           onMouseLeave={this.handleMouseExit.bind(this)}
           onMouseOut={this.handleMouseExit.bind(this)}
+          onMouseDown={this.handleMouseDown.bind(this)}
+          onMouseUp={this.handleMouseUp.bind(this)}
         />
       </div>
     )
