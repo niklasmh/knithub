@@ -1,8 +1,0 @@
-pipeline:
-  install:
-    image: node:8
-    commands: yarn
-
-  build:
-    image: node:8
-    commands: yarn run build
