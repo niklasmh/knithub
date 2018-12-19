@@ -2,6 +2,12 @@
   "version": 2,
   "name": "knithub",
   "alias": "knithub.hanneko.no",
-  "builds": [{ "src": "package.json", "use": "@now/static-build" }],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@now/static-build",
+      "config": { "distDir": "build" }
+    }
+  ],
   "routes": [{ "src": "/(.*)", "dest": "/build/$1" }]
 }
