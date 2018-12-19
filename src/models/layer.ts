@@ -1,6 +1,6 @@
 import { Grid } from './grid'
 
-interface Layer {
+export interface Layer {
   grid: Grid
   selected?: boolean
 }
