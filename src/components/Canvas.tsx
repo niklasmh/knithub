@@ -31,6 +31,8 @@ interface IState {
   drawColor: RenderGridElement
   selectedRect: Rect
   selectedGrid: RenderGrid
+  movingSelection: boolean
+  movingSelectionPosition: Point
   mousePosition: Point
   mouseDownPosition: Point
   mouseUpPosition: Point
@@ -75,6 +77,8 @@ export default class Canvas extends Component<IProps, IState> {
       selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
       selectedGrid,
       mousePosition: { x: -1, y: -1 },
+      movingSelection: false,
+      movingSelectionPosition: { x: -1, y: -1 },
       mouseHover: false,
       mouseDown: false,
       mouseDownPosition: { x: -1, y: -1 },
@@ -132,20 +136,50 @@ export default class Canvas extends Component<IProps, IState> {
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
     if (posChanged) {
-      const end =
-        this.props.mode === Modes.SELECT && this.state.mouseDown
-          ? { x, y }
-          : this.state.selectedRect.end
-
+      const selectedRect: Rect = { ...this.state.selectedRect }
       const renderGrid: RenderGrid = this.state.renderGrid.slice()
+      let selectedGrid: RenderGrid = this.state.selectedGrid.slice()
+      let movingSelectionPosition: Point = this.state.movingSelectionPosition
+      let cursor: string = this.state.cursor
       if (this.props.mode === Modes.DRAW && this.state.mouseDown) {
         renderGrid[y][x] = this.state.drawColor
+      } else if (this.props.mode === Modes.SELECT) {
+        if (this.state.mouseDown && !this.state.movingSelection) {
+          selectedRect.end = { x, y }
+        }
+        if (this.state.movingSelection) {
+          selectedRect.start.x = -1
+        }
+        if (!this.state.ctrlDown) {
+          if (this.state.movingSelection) {
+            selectedGrid = this.transformGrid(this.state.selectedGrid, {
+              type: Transformations.TRANSLATE_X,
+              value: x - movingSelectionPosition.x
+            })
+            selectedGrid = this.transformGrid(selectedGrid, {
+              type: Transformations.TRANSLATE_Y,
+              value: y - movingSelectionPosition.y
+            })
+            movingSelectionPosition = { x, y }
+          } else {
+            if (this.state.selectedGrid[y][x] !== null) {
+              cursor = 'grab'
+            } else {
+              cursor = 'crosshair'
+            }
+          }
+        } else {
+          cursor = 'copy'
+        }
       }
 
       this.setState({
         ...this.state,
+        cursor,
         renderGrid,
-        selectedRect: { start: this.state.selectedRect.start, end },
+        selectedGrid,
+        selectedRect,
+        movingSelectionPosition,
         mousePosition: { x, y },
         mouseHover: true
       })
@@ -174,6 +208,9 @@ export default class Canvas extends Component<IProps, IState> {
       const renderGrid: RenderGrid = this.state.renderGrid.slice()
       const selectedGrid: RenderGrid = this.state.selectedGrid.slice()
       let drawColor: RenderGridElement = this.state.drawColor
+      let cursor: string = this.state.cursor
+      let movingSelection: boolean = this.state.movingSelection
+      let movingSelectionPosition: Point = this.state.movingSelectionPosition
       if (this.props.mode === Modes.DRAW) {
         if (renderGrid[y][x] === this.props.color) {
           drawColor = null
@@ -184,16 +221,28 @@ export default class Canvas extends Component<IProps, IState> {
         renderGrid[y][x] = drawColor
       } else if (this.props.mode === Modes.SELECT) {
         if (this.state.ctrlDown) {
+          cursor = 'copy'
         } else {
-          this.mergeLayers(renderGrid, true, selectedGrid)
+          if (this.state.selectedGrid[y][x] !== null) {
+            cursor = 'grabbing'
+            movingSelectionPosition = { x, y }
+            movingSelection = true
+            selectedRect.start.x = -1
+          } else {
+            this.mergeLayers(renderGrid, true, selectedGrid)
+            cursor = 'crosshair'
+          }
         }
       }
 
       this.setState({
         ...this.state,
+        cursor,
         renderGrid,
         drawColor,
         selectedRect,
+        movingSelection,
+        movingSelectionPosition,
         mouseDown: true,
         mouseDownPosition: { x, y }
       })
@@ -213,42 +262,61 @@ export default class Canvas extends Component<IProps, IState> {
 
       const { renderGrid } = this.state
       const selectedGrid: RenderGrid = this.state.selectedGrid.slice()
+      let cursor: string = this.state.cursor
+
       if (this.props.mode === Modes.SELECT) {
-        const start: Point = {
-          x: Math.min(selectedRect.start.x, selectedRect.end.x),
-          y: Math.min(selectedRect.start.y, selectedRect.end.y)
-        }
-        const end: Point = {
-          x: Math.max(selectedRect.start.x, selectedRect.end.x),
-          y: Math.max(selectedRect.start.y, selectedRect.end.y)
+        if (!this.state.movingSelection) {
+          const start: Point = {
+            x: Math.min(selectedRect.start.x, selectedRect.end.x),
+            y: Math.min(selectedRect.start.y, selectedRect.end.y)
+          }
+          const end: Point = {
+            x: Math.max(selectedRect.start.x, selectedRect.end.x),
+            y: Math.max(selectedRect.start.y, selectedRect.end.y)
+          }
+
+          if (
+            selectedGrid[selectedRect.start.y][selectedRect.start.x] !== null
+          ) {
+            for (let y: number = start.y; y <= end.y; y++) {
+              for (let x: number = start.x; x <= end.x; x++) {
+                if (selectedGrid[y][x] !== null) {
+                  renderGrid[y][x] = selectedGrid[y][x]
+                  selectedGrid[y][x] = null
+                }
+              }
+            }
+          } else {
+            for (let y: number = start.y; y <= end.y; y++) {
+              for (let x: number = start.x; x <= end.x; x++) {
+                if (renderGrid[y][x] !== null) {
+                  selectedGrid[y][x] = renderGrid[y][x]
+                  renderGrid[y][x] = null
+                }
+              }
+            }
+          }
         }
 
-        if (selectedGrid[selectedRect.start.y][selectedRect.start.x] !== null) {
-          for (let y: number = start.y; y <= end.y; y++) {
-            for (let x: number = start.x; x <= end.x; x++) {
-              if (selectedGrid[y][x] !== null) {
-                renderGrid[y][x] = selectedGrid[y][x]
-                selectedGrid[y][x] = null
-              }
-            }
+        selectedRect.start.x = -1
+
+        if (!this.state.ctrlDown) {
+          if (this.state.selectedGrid[y][x] !== null) {
+            cursor = 'grab'
+          } else {
+            cursor = 'crosshair'
           }
         } else {
-          for (let y: number = start.y; y <= end.y; y++) {
-            for (let x: number = start.x; x <= end.x; x++) {
-              if (renderGrid[y][x] !== null) {
-                selectedGrid[y][x] = renderGrid[y][x]
-                renderGrid[y][x] = null
-              }
-            }
-          }
+          cursor = 'copy'
         }
-        selectedRect.start.x = -1
       }
 
       this.setState({
         ...this.state,
+        cursor,
         selectedRect,
         selectedGrid,
+        movingSelection: false,
         mouseDown: false,
         mouseUpPosition: { x, y }
       })
@@ -283,7 +351,18 @@ export default class Canvas extends Component<IProps, IState> {
         break
       case 17: // Ctrl
         if (this.props.mode === Modes.SELECT) {
-          this.setState({ ...this.state, cursor: 'crosshair', ctrlDown: false })
+          let cursor: string = this.state.cursor
+          if (
+            this.state.selectedGrid[this.state.mousePosition.y][
+              this.state.mousePosition.x
+            ] !== null ||
+            this.state.movingSelection
+          ) {
+            cursor = 'grab'
+          } else {
+            cursor = 'crosshair'
+          }
+          this.setState({ ...this.state, cursor, ctrlDown: false })
         }
         break
     }
@@ -402,11 +481,7 @@ export default class Canvas extends Component<IProps, IState> {
           break
         case Transformations.TRANSLATE_X:
           for (let y: number = bounds.start.y; y <= bounds.end.y; y++) {
-            for (
-              let x: number = bounds.start.x;
-              x <= bounds.end.x + value;
-              x++
-            ) {
+            for (let x: number = 0; x <= grid[0].length; x++) {
               const position: Point = {
                 x: x + value,
                 y
@@ -418,7 +493,7 @@ export default class Canvas extends Component<IProps, IState> {
           }
           break
         case Transformations.TRANSLATE_Y:
-          for (let y: number = bounds.start.y; y <= bounds.end.y + value; y++) {
+          for (let y: number = 0; y < grid.length; y++) {
             for (let x: number = bounds.start.x; x <= bounds.end.x; x++) {
               const position: Point = {
                 x,
