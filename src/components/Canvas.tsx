@@ -2,10 +2,12 @@ import React, { Component, EventHandler } from 'react'
 import './Canvas.css'
 import { Grid } from '../models/grid'
 import { Layer } from '../models/layer'
+import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Point } from '../models/point'
 
 interface IProps {
+  mode: Modes
   grid: Grid
   width: number
   height: number
@@ -91,7 +93,10 @@ export default class Canvas extends Component<IProps, IState> {
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
     if (posChanged) {
-      const end = this.state.mouseDown ? { x, y } : this.state.selectedRect.end
+      const end =
+        this.props.mode === Modes.SELECT && this.state.mouseDown
+          ? { x, y }
+          : this.state.selectedRect.end
 
       this.setState({
         ...this.state,
@@ -116,9 +121,14 @@ export default class Canvas extends Component<IProps, IState> {
     const y: number = position.y
 
     if (evt.button === 0) {
+      const selectedRect: Rect =
+        this.props.mode === Modes.SELECT
+          ? { start: { x, y }, end: { x, y } }
+          : this.state.selectedRect
+
       this.setState({
         ...this.state,
-        selectedRect: { start: { x, y }, end: { x, y } },
+        selectedRect,
         mouseDown: true,
         mouseDownPosition: { x, y }
       })
@@ -131,9 +141,14 @@ export default class Canvas extends Component<IProps, IState> {
     const y: number = position.y
 
     if (evt.button === 0) {
+      const selectedRect: Rect =
+        this.props.mode === Modes.SELECT
+          ? { start: this.state.selectedRect.start, end: { x, y } }
+          : this.state.selectedRect
+
       this.setState({
         ...this.state,
-        selectedRect: { start: this.state.selectedRect.start, end: { x, y } },
+        selectedRect,
         mouseDown: false,
         mouseUpPosition: { x, y }
       })
@@ -141,8 +156,7 @@ export default class Canvas extends Component<IProps, IState> {
   }
 
   handleRightClick(evt: any) {
-    evt.preventDefault()
-    console.log('nice')
+    //evt.preventDefault()
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {

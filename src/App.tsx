@@ -6,6 +6,7 @@ import Canvas from './components/Canvas'
 import Layers from './components/Layers'
 
 import { Grid } from './models/grid'
+import { Modes } from './models/modes'
 
 interface IProps {}
 
@@ -44,6 +45,7 @@ class App extends Component<IProps, IState> {
           width={width * grid.width}
           height={height * grid.height}
           grid={grid}
+          mode={Modes.SELECT}
         />
       </div>
     )
