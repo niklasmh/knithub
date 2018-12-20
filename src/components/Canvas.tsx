@@ -297,13 +297,17 @@ export default class Canvas extends Component<IProps, IState> {
       }
 
       if (selectedRect.start.x >= 0) {
-        this.ctx.beginPath()
-        this.ctx.strokeStyle = '#ddd'
         this.ctx.lineWidth = 3
         const width: number = selectedRect.end.x - selectedRect.start.x
         const offsetWidth: number = width >= 0 ? 1 : 0
         const height: number = selectedRect.end.y - selectedRect.start.y
         const offsetHeight: number = height >= 0 ? 1 : 0
+
+        this.ctx.lineDashOffset = 0
+        this.ctx.setLineDash([6])
+        this.ctx.strokeStyle = '#ddd'
+
+        this.ctx.beginPath()
         this.ctx.rect(
           (selectedRect.start.x + 1 - offsetWidth) * stepSizeX,
           (selectedRect.start.y + 1 - offsetHeight) * stepSizeY,
@@ -311,6 +315,18 @@ export default class Canvas extends Component<IProps, IState> {
           (height + offsetHeight * 2 - 1) * stepSizeY
         )
         this.ctx.stroke()
+
+        this.ctx.lineDashOffset = 6
+        this.ctx.strokeStyle = '#000'
+        this.ctx.beginPath()
+        this.ctx.rect(
+          (selectedRect.start.x + 1 - offsetWidth) * stepSizeX,
+          (selectedRect.start.y + 1 - offsetHeight) * stepSizeY,
+          (width + offsetWidth * 2 - 1) * stepSizeX,
+          (height + offsetHeight * 2 - 1) * stepSizeY
+        )
+        this.ctx.stroke()
+        this.ctx.setLineDash([])
       }
     }
   }
