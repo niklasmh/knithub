@@ -7,6 +7,7 @@ import Layers from './components/Layers'
 
 import { Grid } from './models/grid'
 import { Modes } from './models/modes'
+import { Color } from './models/color'
 
 interface IProps {}
 
@@ -14,6 +15,7 @@ interface IState {
   grid: Grid
   scale: [number, number]
   mode: Modes
+  color: Color
 }
 
 class App extends Component<IProps, IState> {
@@ -29,7 +31,8 @@ class App extends Component<IProps, IState> {
     this.state = {
       grid,
       scale: [80, 80],
-      mode: Modes.DRAW
+      mode: Modes.DRAW,
+      color: { value: 'white' }
     }
   }
 
@@ -41,7 +44,8 @@ class App extends Component<IProps, IState> {
     const {
       grid,
       scale: [width, height],
-      mode
+      mode,
+      color
     } = this.state
 
     return (
@@ -53,6 +57,7 @@ class App extends Component<IProps, IState> {
           height={height * grid.height}
           grid={grid}
           mode={mode}
+          color={color}
         />
       </div>
     )

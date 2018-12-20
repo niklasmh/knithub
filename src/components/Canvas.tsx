@@ -11,6 +11,7 @@ interface IProps {
   grid: Grid
   width: number
   height: number
+  color: Color
 }
 
 type RenderGridElement = Color | null
@@ -23,6 +24,7 @@ interface Rect {
 
 interface IState {
   renderGrid: RenderGrid
+  drawColor: RenderGridElement
   selectedRect: Rect
   mousePosition: Point
   mouseDownPosition: Point
@@ -52,6 +54,7 @@ export default class Canvas extends Component<IProps, IState> {
 
     this.state = {
       renderGrid,
+      drawColor: props.color,
       selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
       mousePosition: { x: -1, y: -1 },
       mouseHover: false,
@@ -98,8 +101,14 @@ export default class Canvas extends Component<IProps, IState> {
           ? { x, y }
           : this.state.selectedRect.end
 
+      const renderGrid: RenderGrid = this.state.renderGrid.slice()
+      if (this.props.mode === Modes.DRAW && this.state.mouseDown) {
+        renderGrid[y][x] = this.state.drawColor
+      }
+
       this.setState({
         ...this.state,
+        renderGrid,
         selectedRect: { start: this.state.selectedRect.start, end },
         mousePosition: { x, y },
         mouseHover: true
@@ -126,8 +135,21 @@ export default class Canvas extends Component<IProps, IState> {
           ? { start: { x, y }, end: { x, y } }
           : this.state.selectedRect
 
+      const renderGrid: RenderGrid = this.state.renderGrid.slice()
+      let drawColor: RenderGridElement = this.state.drawColor
+      if (this.props.mode === Modes.DRAW) {
+        if (renderGrid[y][x] === this.state.drawColor) {
+          drawColor = null
+        } else {
+          drawColor = this.props.color
+        }
+
+        renderGrid[y][x] = drawColor
+      }
+
       this.setState({
         ...this.state,
+        drawColor,
         selectedRect,
         mouseDown: true,
         mouseDownPosition: { x, y }
@@ -205,20 +227,23 @@ export default class Canvas extends Component<IProps, IState> {
 
   drawMasks(grid: Grid, renderGrid: RenderGrid) {
     if (this.ctx !== null) {
-      this.ctx.beginPath()
-
       const stepSizeX: number = this.props.width / grid.width
       const stepSizeY: number = this.props.height / grid.height
       for (let x: number = 0; x <= grid.width; x++) {
         for (let y: number = 0; y <= grid.height; y++) {
           if (renderGrid[y][x] !== null) {
-            this.ctx.fillStyle = this.generateColor(renderGrid[y][x])
+            const currentColor: string = this.generateColor(renderGrid[y][x])
+            if (this.ctx.fillStyle !== currentColor) {
+              this.ctx.beginPath()
+            }
             this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
+            if (this.ctx.fillStyle !== currentColor) {
+              this.ctx.fillStyle = currentColor
+              this.ctx.fill()
+            }
           }
         }
       }
-
-      this.ctx.fill()
     }
   }
 
