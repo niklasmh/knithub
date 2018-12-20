@@ -5,6 +5,7 @@ import { Layer } from '../models/layer'
 import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Point } from '../models/point'
+import { Transformation, Transformations } from '../models/transformations'
 
 interface IProps {
   mode: Modes
@@ -314,6 +315,147 @@ export default class Canvas extends Component<IProps, IState> {
       }
     }
     return firstLayer
+  }
+
+  public transformation(operation: Transformation) {
+    const selectedGrid: RenderGrid = this.transformGrid(
+      this.state.selectedGrid,
+      operation
+    )
+    this.setState({ ...this.state, selectedGrid })
+  }
+
+  transformGrid(grid: RenderGrid, ...operations: Transformation[]): RenderGrid {
+    const bounds: Rect = {
+      start: {
+        x: grid[0].length - 1,
+        y: grid.length - 1
+      },
+      end: {
+        x: 0,
+        y: 0
+      }
+    }
+
+    for (let y: number = 0; y < grid.length; y++) {
+      for (let x: number = 0; x < grid[0].length; x++) {
+        if (grid[y][x] !== null) {
+          bounds.start.x = Math.min(bounds.start.x, x)
+          bounds.end.x = Math.max(bounds.end.x, x)
+          bounds.start.y = Math.min(bounds.start.y, y)
+          bounds.end.y = Math.max(bounds.end.y, y)
+        }
+      }
+    }
+
+    const center: Point = {
+      x: Math.round((bounds.start.x + bounds.end.x) / 2),
+      y: Math.round((bounds.start.y + bounds.end.y) / 2)
+    }
+
+    const evenX: boolean = (bounds.start.x - bounds.end.x) % 2 !== 0
+    const evenY: boolean = (bounds.start.y - bounds.end.y) % 2 !== 0
+
+    const transformedGrid: RenderGrid = grid.map((row: RenderGridElement[]) => {
+      const emptyRow: RenderGridElement[] = []
+      for (let x: number = 0; x < row.length; x++) {
+        emptyRow.push(null)
+      }
+      return emptyRow
+    })
+
+    for (const { type, value = 0 } of operations) {
+      switch (type) {
+        case Transformations.ROTATION:
+          const matrix: [[number, number], [number, number]] = [
+            [Math.cos(value), -Math.sin(value)],
+            [Math.sin(value), Math.cos(value)]
+          ]
+          for (let y: number = 0; y < grid.length; y++) {
+            for (let x: number = 0; x < grid[0].length; x++) {
+              const position: Point = {
+                x:
+                  center.x +
+                  Math.round(
+                    matrix[0][0] * (x - center.x) +
+                      matrix[0][1] * (y - center.y)
+                  ) +
+                  (evenX ? -1 : 0),
+                y:
+                  center.y +
+                  Math.round(
+                    matrix[1][0] * (x - center.x) +
+                      matrix[1][1] * (y - center.y)
+                  ) +
+                  (evenY ? 0 : 0)
+              }
+              if (
+                position.x >= 0 &&
+                position.x < grid[0].length &&
+                position.y >= 0 &&
+                position.y < grid.length
+              ) {
+                transformedGrid[position.y][position.x] = grid[y][x]
+              }
+            }
+          }
+          break
+        case Transformations.TRANSLATE_X:
+          for (let y: number = bounds.start.y; y <= bounds.end.y; y++) {
+            for (
+              let x: number = bounds.start.x;
+              x <= bounds.end.x + value;
+              x++
+            ) {
+              const position: Point = {
+                x: x + value,
+                y
+              }
+              if (position.x >= 0 && position.x < grid[0].length) {
+                transformedGrid[position.y][position.x] = grid[y][x]
+              }
+            }
+          }
+          break
+        case Transformations.TRANSLATE_Y:
+          for (let y: number = bounds.start.y; y <= bounds.end.y + value; y++) {
+            for (let x: number = bounds.start.x; x <= bounds.end.x; x++) {
+              const position: Point = {
+                x,
+                y: y + value
+              }
+              if (position.y >= 0 && position.y < grid.length) {
+                transformedGrid[position.y][position.x] = grid[y][x]
+              }
+            }
+          }
+          break
+        case Transformations.FLIP_X:
+          for (let y: number = bounds.start.y; y <= bounds.end.y; y++) {
+            for (let x: number = bounds.start.x; x <= bounds.end.x; x++) {
+              const position: Point = {
+                x: center.x - (x - center.x) + (evenX ? -1 : 0),
+                y
+              }
+              transformedGrid[position.y][position.x] = grid[y][x]
+            }
+          }
+          break
+        case Transformations.FLIP_Y:
+          for (let y: number = bounds.start.y; y <= bounds.end.y; y++) {
+            for (let x: number = bounds.start.x; x <= bounds.end.x; x++) {
+              const position: Point = {
+                x,
+                y: center.y - (y - center.y) + (evenY ? -1 : 0)
+              }
+              transformedGrid[position.y][position.x] = grid[y][x]
+            }
+          }
+          break
+      }
+    }
+
+    return transformedGrid
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {

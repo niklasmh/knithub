@@ -8,6 +8,7 @@ import Layers from './components/Layers'
 import { Grid } from './models/grid'
 import { Modes } from './models/modes'
 import { Color } from './models/color'
+import { Transformation } from './models/transformations'
 
 interface IProps {}
 
@@ -19,6 +20,8 @@ interface IState {
 }
 
 class App extends Component<IProps, IState> {
+  private canvas: React.RefObject<Canvas> = React.createRef()
+
   constructor(props: IProps) {
     super(props)
 
@@ -40,6 +43,12 @@ class App extends Component<IProps, IState> {
     this.setState({ ...this.state, mode })
   }
 
+  transformation(operation: Transformation) {
+    if (this.canvas.current !== null) {
+      this.canvas.current.transformation(operation)
+    }
+  }
+
   render() {
     const {
       grid,
@@ -50,9 +59,15 @@ class App extends Component<IProps, IState> {
 
     return (
       <div className="App">
-        <Toolbar changeMode={(mode: Modes) => this.changeMode(mode)} />
+        <Toolbar
+          transformation={(operation: Transformation) =>
+            this.transformation(operation)
+          }
+          changeMode={(mode: Modes) => this.changeMode(mode)}
+        />
         <Layers />
         <Canvas
+          ref={this.canvas}
           width={width * grid.width}
           height={height * grid.height}
           grid={grid}
