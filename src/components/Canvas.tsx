@@ -32,6 +32,7 @@ interface IState {
 export default class Canvas extends Component<IProps, IState> {
   public canvas: any = null
   public ctx: CanvasRenderingContext2D | null = null
+  private showControlPoints: boolean = false
 
   constructor(props: IProps) {
     super(props)
@@ -114,12 +115,14 @@ export default class Canvas extends Component<IProps, IState> {
     const x: number = position.x
     const y: number = position.y
 
-    this.setState({
-      ...this.state,
-      selectedRect: { start: { x, y }, end: { x, y } },
-      mouseDown: true,
-      mouseDownPosition: { x, y }
-    })
+    if (evt.button === 0) {
+      this.setState({
+        ...this.state,
+        selectedRect: { start: { x, y }, end: { x, y } },
+        mouseDown: true,
+        mouseDownPosition: { x, y }
+      })
+    }
   }
 
   handleMouseUp(evt: any) {
@@ -127,12 +130,19 @@ export default class Canvas extends Component<IProps, IState> {
     const x: number = position.x
     const y: number = position.y
 
-    this.setState({
-      ...this.state,
-      selectedRect: { start: this.state.selectedRect.start, end: { x, y } },
-      mouseDown: false,
-      mouseUpPosition: { x, y }
-    })
+    if (evt.button === 0) {
+      this.setState({
+        ...this.state,
+        selectedRect: { start: this.state.selectedRect.start, end: { x, y } },
+        mouseDown: false,
+        mouseUpPosition: { x, y }
+      })
+    }
+  }
+
+  handleRightClick(evt: any) {
+    evt.preventDefault()
+    console.log('nice')
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -201,7 +211,7 @@ export default class Canvas extends Component<IProps, IState> {
   drawMousePointer() {
     if (this.ctx !== null && this.state.mouseHover) {
       this.ctx.beginPath()
-      this.ctx.fillStyle = '#333'
+      this.ctx.fillStyle = '#fff2'
 
       const stepSizeX: number = this.props.width / this.props.grid.width
       const stepSizeY: number = this.props.height / this.props.grid.height
@@ -219,33 +229,33 @@ export default class Canvas extends Component<IProps, IState> {
 
   drawControlPoints() {
     if (this.ctx !== null) {
-      this.ctx.beginPath()
-      this.ctx.fillStyle = '#666'
-
       const stepSizeX: number = this.props.width / this.props.grid.width
       const stepSizeY: number = this.props.height / this.props.grid.height
       const { mouseDownPosition, mouseUpPosition, selectedRect } = this.state
 
-      if (mouseDownPosition.x >= 0 && mouseDownPosition.y >= 0) {
-        const downPosition: Point = mouseDownPosition
-        this.ctx.rect(
-          downPosition.x * stepSizeX,
-          downPosition.y * stepSizeY,
-          stepSizeX,
-          stepSizeY
-        )
+      if (this.showControlPoints) {
+        this.ctx.beginPath()
+        this.ctx.fillStyle = '#666'
+        if (mouseDownPosition.x >= 0 && mouseDownPosition.y >= 0) {
+          const downPosition: Point = mouseDownPosition
+          this.ctx.rect(
+            downPosition.x * stepSizeX,
+            downPosition.y * stepSizeY,
+            stepSizeX,
+            stepSizeY
+          )
+        }
+        if (mouseUpPosition.x >= 0 && mouseUpPosition.y >= 0) {
+          const upPosition: Point = mouseUpPosition
+          this.ctx.rect(
+            upPosition.x * stepSizeX,
+            upPosition.y * stepSizeY,
+            stepSizeX,
+            stepSizeY
+          )
+        }
+        this.ctx.fill()
       }
-
-      if (mouseUpPosition.x >= 0 && mouseUpPosition.y >= 0) {
-        const upPosition: Point = mouseUpPosition
-        this.ctx.rect(
-          upPosition.x * stepSizeX,
-          upPosition.y * stepSizeY,
-          stepSizeX,
-          stepSizeY
-        )
-      }
-      this.ctx.fill()
 
       if (selectedRect.start.x >= 0) {
         this.ctx.beginPath()
@@ -292,6 +302,7 @@ export default class Canvas extends Component<IProps, IState> {
           onMouseOut={this.handleMouseExit.bind(this)}
           onMouseDown={this.handleMouseDown.bind(this)}
           onMouseUp={this.handleMouseUp.bind(this)}
+          onContextMenu={this.handleRightClick.bind(this)}
         />
       </div>
     )
