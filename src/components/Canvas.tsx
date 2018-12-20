@@ -14,8 +14,14 @@ interface IProps {
 type RenderGridElement = Color | null
 type RenderGrid = RenderGridElement[][]
 
+interface Rect {
+  start: Point
+  end: Point
+}
+
 interface IState {
   renderGrid: RenderGrid
+  selectedRect: Rect
   mousePosition: Point
   mouseDownPosition: Point
   mouseUpPosition: Point
@@ -43,6 +49,7 @@ export default class Canvas extends Component<IProps, IState> {
 
     this.state = {
       renderGrid,
+      selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
       mousePosition: { x: -1, y: -1 },
       mouseHover: false,
       mouseDown: false,
@@ -83,8 +90,11 @@ export default class Canvas extends Component<IProps, IState> {
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
     if (posChanged) {
+      const end = this.state.mouseDown ? { x, y } : this.state.selectedRect.end
+
       this.setState({
         ...this.state,
+        selectedRect: { start: this.state.selectedRect.start, end },
         mousePosition: { x, y },
         mouseHover: true
       })
@@ -106,6 +116,7 @@ export default class Canvas extends Component<IProps, IState> {
 
     this.setState({
       ...this.state,
+      selectedRect: { start: { x, y }, end: { x, y } },
       mouseDown: true,
       mouseDownPosition: { x, y }
     })
@@ -116,7 +127,12 @@ export default class Canvas extends Component<IProps, IState> {
     const x: number = position.x
     const y: number = position.y
 
-    this.setState({ ...this.state, mouseDown: true, mouseUpPosition: { x, y } })
+    this.setState({
+      ...this.state,
+      selectedRect: { start: this.state.selectedRect.start, end: { x, y } },
+      mouseDown: false,
+      mouseUpPosition: { x, y }
+    })
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -208,12 +224,10 @@ export default class Canvas extends Component<IProps, IState> {
 
       const stepSizeX: number = this.props.width / this.props.grid.width
       const stepSizeY: number = this.props.height / this.props.grid.height
+      const { mouseDownPosition, mouseUpPosition, selectedRect } = this.state
 
-      if (
-        this.state.mouseDownPosition.x >= 0 &&
-        this.state.mouseDownPosition.y >= 0
-      ) {
-        const downPosition: Point = this.state.mouseDownPosition
+      if (mouseDownPosition.x >= 0 && mouseDownPosition.y >= 0) {
+        const downPosition: Point = mouseDownPosition
         this.ctx.rect(
           downPosition.x * stepSizeX,
           downPosition.y * stepSizeY,
@@ -222,11 +236,8 @@ export default class Canvas extends Component<IProps, IState> {
         )
       }
 
-      if (
-        this.state.mouseUpPosition.x >= 0 &&
-        this.state.mouseUpPosition.y >= 0
-      ) {
-        const upPosition: Point = this.state.mouseUpPosition
+      if (mouseUpPosition.x >= 0 && mouseUpPosition.y >= 0) {
+        const upPosition: Point = mouseUpPosition
         this.ctx.rect(
           upPosition.x * stepSizeX,
           upPosition.y * stepSizeY,
@@ -234,8 +245,24 @@ export default class Canvas extends Component<IProps, IState> {
           stepSizeY
         )
       }
-
       this.ctx.fill()
+
+      if (selectedRect.start.x >= 0) {
+        this.ctx.beginPath()
+        this.ctx.strokeStyle = '#ddd'
+        this.ctx.lineWidth = 3
+        const width: number = selectedRect.end.x - selectedRect.start.x
+        const offsetWidth: number = width >= 0 ? 1 : 0
+        const height: number = selectedRect.end.y - selectedRect.start.y
+        const offsetHeight: number = height >= 0 ? 1 : 0
+        this.ctx.rect(
+          (selectedRect.start.x + 1 - offsetWidth) * stepSizeX,
+          (selectedRect.start.y + 1 - offsetHeight) * stepSizeY,
+          (width + offsetWidth * 2 - 1) * stepSizeX,
+          (height + offsetHeight * 2 - 1) * stepSizeY
+        )
+        this.ctx.stroke()
+      }
     }
   }
 
