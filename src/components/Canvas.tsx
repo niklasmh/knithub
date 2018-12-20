@@ -49,18 +49,18 @@ export default class Canvas extends Component<IProps, IState> {
     super(props)
 
     const renderGrid: RenderGrid = []
-    for (let y = 0; y < props.height; y++) {
+    for (let y = 0; y < props.grid.height; y++) {
       const row: RenderGridElement[] = []
-      for (let x = 0; x < props.width; x++) {
+      for (let x = 0; x < props.grid.width; x++) {
         row.push(null)
       }
       renderGrid.push(row)
     }
 
     const selectedGrid: RenderGrid = []
-    for (let y = 0; y < props.height; y++) {
+    for (let y = 0; y < props.grid.height; y++) {
       const row: RenderGridElement[] = []
-      for (let x = 0; x < props.width; x++) {
+      for (let x = 0; x < props.grid.width; x++) {
         row.push(null)
       }
       selectedGrid.push(row)
@@ -481,7 +481,7 @@ export default class Canvas extends Component<IProps, IState> {
           break
         case Transformations.TRANSLATE_X:
           for (let y: number = bounds.start.y; y <= bounds.end.y; y++) {
-            for (let x: number = 0; x <= grid[0].length; x++) {
+            for (let x: number = 0; x < grid[0].length; x++) {
               const position: Point = {
                 x: x + value,
                 y
@@ -589,8 +589,8 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.strokeStyle = '#000'
 
         this.ctx.beginPath()
-        for (let x: number = 0; x <= grid.width; x++) {
-          for (let y: number = 0; y <= grid.height; y++) {
+        for (let x: number = 0; x < grid.width; x++) {
+          for (let y: number = 0; y < grid.height; y++) {
             if (renderGrid[y][x] !== null) {
               this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
             }
@@ -602,8 +602,8 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.strokeStyle = '#ddd'
         this.ctx.beginPath()
 
-        for (let x: number = 0; x <= grid.width; x++) {
-          for (let y: number = 0; y <= grid.height; y++) {
+        for (let x: number = 0; x < grid.width; x++) {
+          for (let y: number = 0; y < grid.height; y++) {
             if (renderGrid[y][x] !== null) {
               this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
             }
@@ -613,8 +613,8 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.setLineDash([])
       }
 
-      for (let x: number = 0; x <= grid.width; x++) {
-        for (let y: number = 0; y <= grid.height; y++) {
+      for (let x: number = 0; x < grid.width; x++) {
+        for (let y: number = 0; y < grid.height; y++) {
           if (renderGrid[y][x] !== null) {
             const currentColor: string = this.generateColor(renderGrid[y][x])
             if (this.ctx.fillStyle !== currentColor) {
