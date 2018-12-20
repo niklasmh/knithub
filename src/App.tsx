@@ -13,6 +13,7 @@ interface IProps {}
 interface IState {
   grid: Grid
   scale: [number, number]
+  mode: Modes
 }
 
 class App extends Component<IProps, IState> {
@@ -27,25 +28,31 @@ class App extends Component<IProps, IState> {
 
     this.state = {
       grid,
-      scale: [80, 80]
+      scale: [80, 80],
+      mode: Modes.DRAW
     }
+  }
+
+  changeMode(mode: Modes) {
+    this.setState({ ...this.state, mode })
   }
 
   render() {
     const {
       grid,
-      scale: [width, height]
+      scale: [width, height],
+      mode
     } = this.state
 
     return (
       <div className="App">
-        <Toolbar />
+        <Toolbar changeMode={(mode: Modes) => this.changeMode(mode)} />
         <Layers />
         <Canvas
           width={width * grid.width}
           height={height * grid.height}
           grid={grid}
-          mode={Modes.SELECT}
+          mode={mode}
         />
       </div>
     )
