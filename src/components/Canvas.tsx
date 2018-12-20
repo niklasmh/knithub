@@ -23,9 +23,12 @@ interface Rect {
 }
 
 interface IState {
+  cursor: string
+  ctrlDown: boolean
   renderGrid: RenderGrid
   drawColor: RenderGridElement
   selectedRect: Rect
+  selectedGrid: RenderGrid
   mousePosition: Point
   mouseDownPosition: Point
   mouseUpPosition: Point
@@ -53,9 +56,12 @@ export default class Canvas extends Component<IProps, IState> {
     renderGrid[2][2] = { value: 'green' }
 
     this.state = {
+      cursor: 'default',
+      ctrlDown: false,
       renderGrid,
       drawColor: props.color,
       selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
+      selectedGrid: renderGrid,
       mousePosition: { x: -1, y: -1 },
       mouseHover: false,
       mouseDown: false,
@@ -64,8 +70,24 @@ export default class Canvas extends Component<IProps, IState> {
     }
   }
 
+  componentWillReceiveProps(nextProps: IProps) {
+    if (nextProps.mode !== this.props.mode) {
+      let cursor: string = 'default'
+      switch (nextProps.mode) {
+        case Modes.SELECT:
+          cursor = 'crosshair'
+          break
+        default:
+          cursor = 'default'
+      }
+      this.setState({ ...this.state, cursor })
+    }
+  }
+
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d')
+    document.addEventListener('keydown', this.handleKeyDown.bind(this))
+    document.addEventListener('keyup', this.handleKeyUp.bind(this))
     this.draw()
   }
 
@@ -76,6 +98,8 @@ export default class Canvas extends Component<IProps, IState> {
   componentWillUnmount() {
     this.canvas = null
     this.ctx = null
+    document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+    document.removeEventListener('keyup', this.handleKeyUp.bind(this))
   }
 
   getPositionFromMouse(evt: any): Point {
@@ -138,7 +162,7 @@ export default class Canvas extends Component<IProps, IState> {
       const renderGrid: RenderGrid = this.state.renderGrid.slice()
       let drawColor: RenderGridElement = this.state.drawColor
       if (this.props.mode === Modes.DRAW) {
-        if (renderGrid[y][x] === this.state.drawColor) {
+        if (renderGrid[y][x] === this.props.color) {
           drawColor = null
         } else {
           drawColor = this.props.color
@@ -179,6 +203,26 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleRightClick(evt: any) {
     //evt.preventDefault()
+  }
+
+  handleKeyDown(evt: any) {
+    switch (evt.keyCode) {
+      case 17:
+        if (this.props.mode === Modes.SELECT) {
+          this.setState({ ...this.state, cursor: 'copy', ctrlDown: true })
+        }
+        break
+    }
+  }
+
+  handleKeyUp(evt: any) {
+    switch (evt.keyCode) {
+      case 17:
+        if (this.props.mode === Modes.SELECT) {
+          this.setState({ ...this.state, cursor: 'crosshair', ctrlDown: false })
+        }
+        break
+    }
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -344,10 +388,16 @@ export default class Canvas extends Component<IProps, IState> {
 
   render() {
     const { width, height } = this.props
+    const { cursor } = this.state
+
+    const style: any = {
+      cursor
+    }
 
     return (
       <div className="Canvas">
         <canvas
+          style={style}
           ref={e => (this.canvas = e)}
           width={width}
           height={height}
