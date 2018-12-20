@@ -25,6 +25,7 @@ interface Rect {
 interface IState {
   cursor: string
   ctrlDown: boolean
+  shiftDown: boolean
   renderGrid: RenderGrid
   drawColor: RenderGridElement
   selectedRect: Rect
@@ -53,15 +54,25 @@ export default class Canvas extends Component<IProps, IState> {
       renderGrid.push(row)
     }
 
+    const selectedGrid: RenderGrid = []
+    for (let y = 0; y < props.height; y++) {
+      const row: RenderGridElement[] = []
+      for (let x = 0; x < props.width; x++) {
+        row.push(null)
+      }
+      selectedGrid.push(row)
+    }
+
     renderGrid[2][2] = { value: 'green' }
 
     this.state = {
       cursor: 'default',
       ctrlDown: false,
+      shiftDown: false,
       renderGrid,
       drawColor: props.color,
       selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
-      selectedGrid: renderGrid,
+      selectedGrid,
       mousePosition: { x: -1, y: -1 },
       mouseHover: false,
       mouseDown: false,
@@ -160,6 +171,7 @@ export default class Canvas extends Component<IProps, IState> {
           : this.state.selectedRect
 
       const renderGrid: RenderGrid = this.state.renderGrid.slice()
+      const selectedGrid: RenderGrid = this.state.selectedGrid.slice()
       let drawColor: RenderGridElement = this.state.drawColor
       if (this.props.mode === Modes.DRAW) {
         if (renderGrid[y][x] === this.props.color) {
@@ -169,10 +181,16 @@ export default class Canvas extends Component<IProps, IState> {
         }
 
         renderGrid[y][x] = drawColor
+      } else if (this.props.mode === Modes.SELECT) {
+        if (this.state.ctrlDown) {
+        } else {
+          this.mergeLayers(renderGrid, true, selectedGrid)
+        }
       }
 
       this.setState({
         ...this.state,
+        renderGrid,
         drawColor,
         selectedRect,
         mouseDown: true,
@@ -192,9 +210,44 @@ export default class Canvas extends Component<IProps, IState> {
           ? { start: this.state.selectedRect.start, end: { x, y } }
           : this.state.selectedRect
 
+      const { renderGrid } = this.state
+      const selectedGrid: RenderGrid = this.state.selectedGrid.slice()
+      if (this.props.mode === Modes.SELECT) {
+        const start: Point = {
+          x: Math.min(selectedRect.start.x, selectedRect.end.x),
+          y: Math.min(selectedRect.start.y, selectedRect.end.y)
+        }
+        const end: Point = {
+          x: Math.max(selectedRect.start.x, selectedRect.end.x),
+          y: Math.max(selectedRect.start.y, selectedRect.end.y)
+        }
+
+        if (selectedGrid[selectedRect.start.y][selectedRect.start.x] !== null) {
+          for (let y: number = start.y; y <= end.y; y++) {
+            for (let x: number = start.x; x <= end.x; x++) {
+              if (selectedGrid[y][x] !== null) {
+                renderGrid[y][x] = selectedGrid[y][x]
+                selectedGrid[y][x] = null
+              }
+            }
+          }
+        } else {
+          for (let y: number = start.y; y <= end.y; y++) {
+            for (let x: number = start.x; x <= end.x; x++) {
+              if (renderGrid[y][x] !== null) {
+                selectedGrid[y][x] = renderGrid[y][x]
+                renderGrid[y][x] = null
+              }
+            }
+          }
+        }
+        selectedRect.start.x = -1
+      }
+
       this.setState({
         ...this.state,
         selectedRect,
+        selectedGrid,
         mouseDown: false,
         mouseUpPosition: { x, y }
       })
@@ -207,7 +260,12 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleKeyDown(evt: any) {
     switch (evt.keyCode) {
-      case 17:
+      case 16: // Shift
+        if (this.props.mode === Modes.SELECT) {
+          this.setState({ ...this.state, shiftDown: true })
+        }
+        break
+      case 17: // Ctrl
         if (this.props.mode === Modes.SELECT) {
           this.setState({ ...this.state, cursor: 'copy', ctrlDown: true })
         }
@@ -217,12 +275,45 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleKeyUp(evt: any) {
     switch (evt.keyCode) {
-      case 17:
+      case 16: // Shift
+        if (this.props.mode === Modes.SELECT) {
+          this.setState({ ...this.state, shiftDown: false })
+        }
+        break
+      case 17: // Ctrl
         if (this.props.mode === Modes.SELECT) {
           this.setState({ ...this.state, cursor: 'crosshair', ctrlDown: false })
         }
         break
     }
+  }
+
+  mergeLayers(
+    firstLayer: RenderGrid,
+    clearOthers: boolean = false,
+    ...layers: RenderGrid[]
+  ): RenderGrid {
+    for (const layer of layers) {
+      for (
+        let y: number = 0;
+        y < Math.min(firstLayer.length, layer.length);
+        y++
+      ) {
+        for (
+          let x: number = 0;
+          x < Math.min(firstLayer[y].length, layer[y].length);
+          x++
+        ) {
+          if (layer[y][x] !== null) {
+            firstLayer[y][x] = layer[y][x]
+            if (clearOthers) {
+              layer[y][x] = null
+            }
+          }
+        }
+      }
+    }
+    return firstLayer
   }
 
   drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
@@ -269,10 +360,42 @@ export default class Canvas extends Component<IProps, IState> {
       '0'}, ${color.opacity || '1'})`
   }
 
-  drawMasks(grid: Grid, renderGrid: RenderGrid) {
+  drawMasks(grid: Grid, renderGrid: RenderGrid, outline: boolean = false) {
     if (this.ctx !== null) {
       const stepSizeX: number = this.props.width / grid.width
       const stepSizeY: number = this.props.height / grid.height
+
+      if (outline) {
+        this.ctx.lineWidth = 6
+        this.ctx.lineDashOffset = 0
+        this.ctx.setLineDash([6])
+        this.ctx.strokeStyle = '#000'
+
+        this.ctx.beginPath()
+        for (let x: number = 0; x <= grid.width; x++) {
+          for (let y: number = 0; y <= grid.height; y++) {
+            if (renderGrid[y][x] !== null) {
+              this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
+            }
+          }
+        }
+        this.ctx.stroke()
+
+        this.ctx.lineDashOffset = 6
+        this.ctx.strokeStyle = '#ddd'
+        this.ctx.beginPath()
+
+        for (let x: number = 0; x <= grid.width; x++) {
+          for (let y: number = 0; y <= grid.height; y++) {
+            if (renderGrid[y][x] !== null) {
+              this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
+            }
+          }
+        }
+        this.ctx.stroke()
+        this.ctx.setLineDash([])
+      }
+
       for (let x: number = 0; x <= grid.width; x++) {
         for (let y: number = 0; y <= grid.height; y++) {
           if (renderGrid[y][x] !== null) {
@@ -341,33 +464,41 @@ export default class Canvas extends Component<IProps, IState> {
       }
 
       if (selectedRect.start.x >= 0) {
-        this.ctx.lineWidth = 3
-        const width: number = selectedRect.end.x - selectedRect.start.x
-        const offsetWidth: number = width >= 0 ? 1 : 0
-        const height: number = selectedRect.end.y - selectedRect.start.y
-        const offsetHeight: number = height >= 0 ? 1 : 0
+        const lineWidth = 3
+        this.ctx.lineWidth = lineWidth
+        const start: Point = {
+          x: Math.min(selectedRect.start.x, selectedRect.end.x),
+          y: Math.min(selectedRect.start.y, selectedRect.end.y)
+        }
+        const end: Point = {
+          x: Math.max(selectedRect.start.x, selectedRect.end.x),
+          y: Math.max(selectedRect.start.y, selectedRect.end.y)
+        }
+        const width: number = end.x - start.x
+        const height: number = end.y - start.y
+        const lineOffset: number = lineWidth / 2
 
         this.ctx.lineDashOffset = 0
         this.ctx.setLineDash([6])
-        this.ctx.strokeStyle = '#ddd'
+        this.ctx.strokeStyle = '#000'
 
         this.ctx.beginPath()
         this.ctx.rect(
-          (selectedRect.start.x + 1 - offsetWidth) * stepSizeX,
-          (selectedRect.start.y + 1 - offsetHeight) * stepSizeY,
-          (width + offsetWidth * 2 - 1) * stepSizeX,
-          (height + offsetHeight * 2 - 1) * stepSizeY
+          start.x * stepSizeX - lineOffset,
+          start.y * stepSizeY - lineOffset,
+          (width + 1) * stepSizeX + lineOffset * 2,
+          (height + 1) * stepSizeY + lineOffset * 2
         )
         this.ctx.stroke()
 
         this.ctx.lineDashOffset = 6
-        this.ctx.strokeStyle = '#000'
+        this.ctx.strokeStyle = '#ddd'
         this.ctx.beginPath()
         this.ctx.rect(
-          (selectedRect.start.x + 1 - offsetWidth) * stepSizeX,
-          (selectedRect.start.y + 1 - offsetHeight) * stepSizeY,
-          (width + offsetWidth * 2 - 1) * stepSizeX,
-          (height + offsetHeight * 2 - 1) * stepSizeY
+          start.x * stepSizeX - lineOffset,
+          start.y * stepSizeY - lineOffset,
+          (width + 1) * stepSizeX + lineOffset * 2,
+          (height + 1) * stepSizeY + lineOffset * 2
         )
         this.ctx.stroke()
         this.ctx.setLineDash([])
@@ -381,6 +512,7 @@ export default class Canvas extends Component<IProps, IState> {
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
       this.drawMasks(this.props.grid, this.state.renderGrid)
       this.drawGrid(this.props.grid)
+      this.drawMasks(this.props.grid, this.state.selectedGrid, true)
       this.drawControlPoints()
       this.drawMousePointer()
     }
@@ -390,9 +522,7 @@ export default class Canvas extends Component<IProps, IState> {
     const { width, height } = this.props
     const { cursor } = this.state
 
-    const style: any = {
-      cursor
-    }
+    const style: any = { cursor }
 
     return (
       <div className="Canvas">
