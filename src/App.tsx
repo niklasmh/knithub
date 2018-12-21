@@ -27,13 +27,13 @@ class App extends Component<IProps, IState> {
 
     const grid: Grid = {
       start: { x: 0, y: 0 },
-      width: 10,
-      height: 5
+      width: 80,
+      height: 40
     }
 
     this.state = {
       grid,
-      scale: [80, 80],
+      scale: [10, 10],
       mode: Modes.DRAW,
       color: { value: 'white' }
     }
@@ -68,6 +68,7 @@ class App extends Component<IProps, IState> {
         <Layers />
         <Canvas
           ref={this.canvas}
+          scale={{ x: width, y: height }}
           width={width * grid.width}
           height={height * grid.height}
           grid={grid}

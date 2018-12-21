@@ -12,6 +12,7 @@ interface IProps {
   grid: Grid
   width: number
   height: number
+  scale: Point
   color: Color
 }
 
@@ -44,9 +45,12 @@ export default class Canvas extends Component<IProps, IState> {
   public canvas: any = null
   public ctx: CanvasRenderingContext2D | null = null
   private showControlPoints: boolean = false
+  private lineWidth: number
 
   constructor(props: IProps) {
     super(props)
+
+    this.lineWidth = Math.max(2, props.scale.x / 10)
 
     const renderGrid: RenderGrid = []
     for (let y = 0; y < props.grid.height; y++) {
@@ -533,7 +537,11 @@ export default class Canvas extends Component<IProps, IState> {
     return transformedGrid
   }
 
-  drawGrid(grid: Grid, color: string = '#884400', width: number = 1) {
+  drawGrid(
+    grid: Grid,
+    color: string = '#884400',
+    width: number = this.lineWidth / 2
+  ) {
     if (this.ctx !== null) {
       this.ctx.strokeStyle = color
       this.ctx.lineWidth = width
@@ -583,9 +591,9 @@ export default class Canvas extends Component<IProps, IState> {
       const stepSizeY: number = this.props.height / grid.height
 
       if (outline) {
-        this.ctx.lineWidth = 6
+        this.ctx.lineWidth = this.lineWidth
         this.ctx.lineDashOffset = 0
-        this.ctx.setLineDash([6])
+        this.ctx.setLineDash([this.lineWidth])
         this.ctx.strokeStyle = '#000'
 
         this.ctx.beginPath()
@@ -598,7 +606,7 @@ export default class Canvas extends Component<IProps, IState> {
         }
         this.ctx.stroke()
 
-        this.ctx.lineDashOffset = 6
+        this.ctx.lineDashOffset = this.lineWidth
         this.ctx.strokeStyle = '#ddd'
         this.ctx.beginPath()
 
@@ -681,7 +689,7 @@ export default class Canvas extends Component<IProps, IState> {
       }
 
       if (selectedRect.start.x >= 0) {
-        const lineWidth = 3
+        const lineWidth = this.lineWidth / 2
         this.ctx.lineWidth = lineWidth
         const start: Point = {
           x: Math.min(selectedRect.start.x, selectedRect.end.x),
@@ -696,7 +704,7 @@ export default class Canvas extends Component<IProps, IState> {
         const lineOffset: number = lineWidth / 2
 
         this.ctx.lineDashOffset = 0
-        this.ctx.setLineDash([6])
+        this.ctx.setLineDash([this.lineWidth])
         this.ctx.strokeStyle = '#000'
 
         this.ctx.beginPath()
@@ -708,7 +716,7 @@ export default class Canvas extends Component<IProps, IState> {
         )
         this.ctx.stroke()
 
-        this.ctx.lineDashOffset = 6
+        this.ctx.lineDashOffset = this.lineWidth
         this.ctx.strokeStyle = '#ddd'
         this.ctx.beginPath()
         this.ctx.rect(
