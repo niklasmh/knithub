@@ -343,6 +343,36 @@ export default class Canvas extends Component<IProps, IState> {
           this.setState({ ...this.state, cursor: 'copy', ctrlDown: true })
         }
         break
+      case 37: // Left
+        if (this.props.mode === Modes.SELECT) {
+          evt.preventDefault()
+          this.moveSelection({ x: -1, y: 0 })
+        }
+        break
+      case 38: // Up
+        if (this.props.mode === Modes.SELECT) {
+          evt.preventDefault()
+          this.moveSelection({ x: 0, y: -1 })
+        }
+        break
+      case 39: // Right
+        if (this.props.mode === Modes.SELECT) {
+          evt.preventDefault()
+          this.moveSelection({ x: 1, y: 0 })
+        }
+        break
+      case 40: // Down
+        if (this.props.mode === Modes.SELECT) {
+          evt.preventDefault()
+          this.moveSelection({ x: 0, y: 1 })
+        }
+        break
+      case 46: // Delete
+        if (this.props.mode === Modes.SELECT) {
+          evt.preventDefault()
+          this.deleteSelection()
+        }
+        break
     }
   }
 
@@ -398,6 +428,28 @@ export default class Canvas extends Component<IProps, IState> {
       }
     }
     return firstLayer
+  }
+
+  moveSelection(position: Point, grid: RenderGrid = this.state.selectedGrid) {
+    let selectedGrid: RenderGrid = grid
+    if (position.x !== 0)
+      selectedGrid = this.transformGrid(selectedGrid, {
+        type: Transformations.TRANSLATE_X,
+        value: position.x
+      })
+    if (position.y !== 0)
+      selectedGrid = this.transformGrid(selectedGrid, {
+        type: Transformations.TRANSLATE_Y,
+        value: position.y
+      })
+    this.setState({ ...this.state, selectedGrid })
+  }
+
+  deleteSelection(grid: RenderGrid = this.state.selectedGrid) {
+    const selectedGrid: RenderGrid = grid.map((e: RenderGridElement[]) =>
+      e.map(() => null)
+    )
+    this.setState({ ...this.state, selectedGrid })
   }
 
   public transformation(operation: Transformation) {
