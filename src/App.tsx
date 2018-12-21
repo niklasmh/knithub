@@ -43,6 +43,11 @@ class App extends Component<IProps, IState> {
     this.setState({ ...this.state, mode })
   }
 
+  changeColor(color: Color) {
+    console.log(color)
+    this.setState({ ...this.state, color })
+  }
+
   transformation(operation: Transformation) {
     if (this.canvas.current !== null) {
       this.canvas.current.transformation(operation)
@@ -63,6 +68,7 @@ class App extends Component<IProps, IState> {
           transformation={(operation: Transformation) =>
             this.transformation(operation)
           }
+          changeColor={(color: Color) => this.changeColor(color)}
           changeMode={(mode: Modes) => this.changeMode(mode)}
         />
         <Layers />

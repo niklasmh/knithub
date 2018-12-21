@@ -1,10 +1,12 @@
 import React, { Component } from 'react'
 
 import { Modes } from '../models/modes'
+import { Color } from '../models/color'
 import { Transformation, Transformations } from '../models/transformations'
 
 interface IProps {
   changeMode(mode: Modes): void
+  changeColor(color: Color): void
   transformation(operation: Transformation): void
 }
 
@@ -38,6 +40,10 @@ export default class Toolbar extends Component<IProps, {}> {
         <button onClick={() => this.transformation('ROTATION')}>
           Rotate 90 deg
         </button>
+        <input
+          type="color"
+          onChange={evt => this.props.changeColor({ value: evt.target.value })}
+        />
       </div>
     )
   }

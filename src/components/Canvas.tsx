@@ -673,21 +673,23 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.setLineDash([])
       }
 
+      this.ctx.beginPath()
       for (let x: number = 0; x < grid.width; x++) {
         for (let y: number = 0; y < grid.height; y++) {
           if (renderGrid[y][x] !== null) {
             const currentColor: string = this.generateColor(renderGrid[y][x])
             if (this.ctx.fillStyle !== currentColor) {
+              this.ctx.fill()
               this.ctx.beginPath()
             }
             this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
             if (this.ctx.fillStyle !== currentColor) {
               this.ctx.fillStyle = currentColor
-              this.ctx.fill()
             }
           }
         }
       }
+      this.ctx.fill()
     }
   }
 
