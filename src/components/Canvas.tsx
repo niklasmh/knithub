@@ -1,5 +1,6 @@
-import React, { Component, EventHandler } from 'react'
+import React, { Component } from 'react'
 import './Canvas.css'
+
 import { Grid } from '../models/grid'
 import { Layer } from '../models/layer'
 import { Modes } from '../models/modes'
@@ -15,10 +16,11 @@ interface IProps {
   scale: Point
   color: Color
   layers: Layer[]
+  updateLayers(layers: Layer[]): void
 }
 
-type RenderGridElement = Color | null
-type RenderGrid = RenderGridElement[][]
+export type RenderGridElement = Color | null
+export type RenderGrid = RenderGridElement[][]
 
 interface Rect {
   start: Point
@@ -40,6 +42,7 @@ interface IState {
   mouseUpPosition: Point
   mouseDown: boolean
   mouseHover: boolean
+  layers: Layer[]
 }
 
 export default class Canvas extends Component<IProps, IState> {
@@ -87,13 +90,14 @@ export default class Canvas extends Component<IProps, IState> {
       mouseHover: false,
       mouseDown: false,
       mouseDownPosition: { x: -1, y: -1 },
-      mouseUpPosition: { x: -1, y: -1 }
+      mouseUpPosition: { x: -1, y: -1 },
+      layers: props.layers
     }
   }
 
   componentWillReceiveProps(nextProps: IProps) {
+    let cursor: string = this.state.cursor
     if (nextProps.mode !== this.props.mode) {
-      let cursor: string = 'default'
       switch (nextProps.mode) {
         case Modes.SELECT:
           cursor = 'crosshair'
@@ -101,8 +105,9 @@ export default class Canvas extends Component<IProps, IState> {
         default:
           cursor = 'default'
       }
-      this.setState({ ...this.state, cursor })
     }
+    let layers: Layer[] = this.props.layers
+    this.setState({ ...this.state, cursor, layers })
   }
 
   componentDidMount() {

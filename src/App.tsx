@@ -104,6 +104,10 @@ class App extends Component<IProps, IState> {
     }
   }
 
+  updateLayers(layers: Layer[]) {
+    this.setState({ ...this.state, layers })
+  }
+
   render() {
     const {
       grid,
@@ -142,6 +146,7 @@ class App extends Component<IProps, IState> {
           mode={mode}
           color={color}
           layers={layers}
+          updateLayers={(layers: Layer[]) => this.updateLayers(layers)}
         />
       </div>
     )
