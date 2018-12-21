@@ -14,6 +14,7 @@ interface IProps {
   height: number
   scale: Point
   color: Color
+  layers: Layer[]
 }
 
 type RenderGridElement = Color | null
