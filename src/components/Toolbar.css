@@ -1,0 +1,61 @@
+.Toolbar {
+  display: flex;
+  flex-flow: wrap row;
+  align-items: flex-start;
+}
+
+button {
+  cursor: pointer;
+  appearance: none;
+  border: none;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.05s ease-in-out;
+  color: #ddd;
+  font-weight: bold;
+  margin: 4px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+button.selected {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #000;
+}
+
+button.selected:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #000;
+}
+
+input:not([type]),
+input[type='text'],
+input[type='number'] {
+  appearance: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ddd;
+  border: none;
+  margin: 4px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+input[type='number'] {
+  width: 64px;
+}
+
+.input-group {
+  margin: 4px;
+  display: flex;
+  flex-flow: nowrap column;
+}
+
+.input-element {
+  display: flex;
+  flex-flow: nowrap row;
+  align-items: center;
+}

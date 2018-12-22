@@ -76,6 +76,11 @@ export default class Canvas extends Component<IProps, IState> {
 
     renderGrid[2][2] = { value: 'green' }
 
+    const layers: Layer[] = props.layers
+    layers[0].renderGrid = renderGrid
+
+    props.updateLayers(layers)
+
     this.state = {
       cursor: 'default',
       ctrlDown: false,
@@ -91,7 +96,7 @@ export default class Canvas extends Component<IProps, IState> {
       mouseDown: false,
       mouseDownPosition: { x: -1, y: -1 },
       mouseUpPosition: { x: -1, y: -1 },
-      layers: props.layers
+      layers
     }
   }
 
@@ -270,7 +275,7 @@ export default class Canvas extends Component<IProps, IState> {
           ? { start: this.state.selectedRect.start, end: { x, y } }
           : this.state.selectedRect
 
-      const { renderGrid } = this.state
+      const renderGrid: RenderGrid = this.state.renderGrid.slice()
       const selectedGrid: RenderGrid = this.state.selectedGrid.slice()
       let cursor: string = this.state.cursor
 
@@ -324,6 +329,7 @@ export default class Canvas extends Component<IProps, IState> {
       this.setState({
         ...this.state,
         cursor,
+        renderGrid,
         selectedRect,
         selectedGrid,
         movingSelection: false,
@@ -434,6 +440,16 @@ export default class Canvas extends Component<IProps, IState> {
       }
     }
     return firstLayer
+  }
+
+  updateMainLayer(renderGrid: RenderGrid) {
+    this.updateLayer(renderGrid, 0)
+  }
+
+  updateLayer(renderGrid: RenderGrid, index: number = 0) {
+    const layers: Layer[] = this.props.layers
+    layers[index].renderGrid = renderGrid
+    this.props.updateLayers(layers)
   }
 
   moveSelection(position: Point, grid: RenderGrid = this.state.selectedGrid) {

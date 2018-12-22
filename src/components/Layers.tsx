@@ -15,7 +15,7 @@ export default class Layers extends Component<IProps, {}> {
     const layers: any = this.props.layers.map((layer: Layer, i: number) => {
       return (
         <div className="layer" key={i}>
-          {i}
+          {i == 0 ? <i>Background layer</i> : `Layer ${i}`}
         </div>
       )
     })

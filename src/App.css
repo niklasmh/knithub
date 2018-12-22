@@ -8,18 +8,18 @@
   grid-template-rows: 100px 1fr;
   grid-template-areas:
     'tools tools'
-    'layers canvas';
+    'canvas canvas';
 }
 
-.App > :nth-child(1) {
+.App > .Toolbar {
   grid-area: tools;
 }
 
-.App > :nth-child(2) {
+.App > .layer-list {
   grid-area: layers;
 }
 
-.App > :nth-child(3) {
+.App > .Canvas {
   grid-area: canvas;
   overflow: auto;
 }

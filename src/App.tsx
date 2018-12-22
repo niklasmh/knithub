@@ -14,7 +14,6 @@ import { Transformation } from './models/transformations'
 interface IProps {}
 
 interface IState {
-  grid: Grid
   scale: [number, number]
   mode: Modes
   color: Color
@@ -34,11 +33,10 @@ class App extends Component<IProps, IState> {
     }
 
     this.state = {
-      grid,
       scale: [10, 10],
       mode: Modes.DRAW,
       color: { value: 'white' },
-      layers: []
+      layers: [{ grid, selected: true }]
     }
   }
 
@@ -110,23 +108,25 @@ class App extends Component<IProps, IState> {
 
   render() {
     const {
-      grid,
       scale: [width, height],
       mode,
       color,
       layers
     } = this.state
 
+    const grid: Grid = layers[0].grid
+
     return (
       <div className="App">
         <Toolbar
+          mode={mode}
           transformation={(operation: Transformation) =>
             this.transformation(operation)
           }
           changeColor={(color: Color) => this.changeColor(color)}
           changeMode={(mode: Modes) => this.changeMode(mode)}
         />
-        <Layers
+        {/*<Layers
           layers={layers}
           addLayer={(layer: Layer) => this.addLayer(layer)}
           deleteLayer={(index: number) => this.deleteLayer(index)}
@@ -136,7 +136,7 @@ class App extends Component<IProps, IState> {
           moveLayer={(index: number, steps: number) =>
             this.moveLayer(index, steps)
           }
-        />
+        />*/}
         <Canvas
           ref={this.canvas}
           scale={{ x: width, y: height }}
