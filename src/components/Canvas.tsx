@@ -145,8 +145,14 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleMouseMove(evt: any) {
     const position: Point = this.getPositionFromMouse(evt)
-    const x: number = position.x
-    const y: number = position.y
+    const x: number = Math.min(
+      Math.max(position.x, 0),
+      this.props.grid.width - 1
+    )
+    const y: number = Math.min(
+      Math.max(position.y, 0),
+      this.props.grid.height - 1
+    )
 
     const posChanged: boolean =
       this.state.mousePosition.x != x || this.state.mousePosition.y != y
@@ -211,8 +217,14 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleMouseDown(evt: any) {
     const position: Point = this.getPositionFromMouse(evt)
-    const x: number = position.x
-    const y: number = position.y
+    const x: number = Math.min(
+      Math.max(position.x, 0),
+      this.props.grid.width - 1
+    )
+    const y: number = Math.min(
+      Math.max(position.y, 0),
+      this.props.grid.height - 1
+    )
 
     if (evt.button === 0) {
       const selectedRect: Rect =
@@ -266,8 +278,14 @@ export default class Canvas extends Component<IProps, IState> {
 
   handleMouseUp(evt: any) {
     const position: Point = this.getPositionFromMouse(evt)
-    const x: number = position.x
-    const y: number = position.y
+    const x: number = Math.min(
+      Math.max(position.x, 0),
+      this.props.grid.width - 1
+    )
+    const y: number = Math.min(
+      Math.max(position.y, 0),
+      this.props.grid.height - 1
+    )
 
     if (evt.button === 0) {
       const selectedRect: Rect =
