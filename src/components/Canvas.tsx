@@ -22,6 +22,13 @@ interface IProps {
 export type RenderGridElement = Color | null
 export type RenderGrid = RenderGridElement[][]
 
+type GridChanges = {
+  addTop?: number
+  addBottom?: number
+  addRight?: number
+  addLeft?: number
+}
+
 interface Rect {
   start: Point
   end: Point
@@ -50,6 +57,7 @@ export default class Canvas extends Component<IProps, IState> {
   public ctx: CanvasRenderingContext2D | null = null
   private showControlPoints: boolean = false
   private lineWidth: number
+  private gridOffset: Point = { x: 0, y: 0 }
 
   constructor(props: IProps) {
     super(props)
@@ -111,8 +119,21 @@ export default class Canvas extends Component<IProps, IState> {
           cursor = 'default'
       }
     }
-    let layers: Layer[] = this.props.layers
-    this.setState({ ...this.state, cursor, layers })
+    this.gridOffset = {
+      x: Math.min(this.gridOffset.x, nextProps.grid.start.x),
+      y: Math.min(this.gridOffset.y, nextProps.grid.start.y)
+    }
+    let layers: Layer[] = nextProps.layers
+    const gridChanges: GridChanges = this.findChangesInGrid(
+      this.props.grid,
+      nextProps.grid
+    )
+    const renderGrid: RenderGrid = this.changeGridSize(
+      this.state.renderGrid,
+      nextProps.grid,
+      gridChanges
+    )
+    this.setState({ ...this.state, cursor, layers, renderGrid })
   }
 
   componentDidMount() {
@@ -163,7 +184,7 @@ export default class Canvas extends Component<IProps, IState> {
       let movingSelectionPosition: Point = this.state.movingSelectionPosition
       let cursor: string = this.state.cursor
       if (this.props.mode === Modes.DRAW && this.state.mouseDown) {
-        renderGrid[y][x] = this.state.drawColor
+        this.setRenderGridCell(renderGrid, { x, y }, this.state.drawColor)
       } else if (this.props.mode === Modes.SELECT) {
         if (this.state.mouseDown && !this.state.movingSelection) {
           selectedRect.end = { x, y }
@@ -183,7 +204,7 @@ export default class Canvas extends Component<IProps, IState> {
             })
             movingSelectionPosition = { x, y }
           } else {
-            if (this.state.selectedGrid[y][x] !== null) {
+            if (this.getRenderGridCell(selectedGrid, { x, y }) !== null) {
               cursor = 'grab'
             } else {
               cursor = 'crosshair'
@@ -239,18 +260,18 @@ export default class Canvas extends Component<IProps, IState> {
       let movingSelection: boolean = this.state.movingSelection
       let movingSelectionPosition: Point = this.state.movingSelectionPosition
       if (this.props.mode === Modes.DRAW) {
-        if (renderGrid[y][x] === this.props.color) {
+        if (this.getRenderGridCell(renderGrid, { x, y }) === this.props.color) {
           drawColor = null
         } else {
           drawColor = this.props.color
         }
 
-        renderGrid[y][x] = drawColor
+        this.setRenderGridCell(renderGrid, { x, y }, drawColor)
       } else if (this.props.mode === Modes.SELECT) {
         if (this.state.ctrlDown) {
           cursor = 'copy'
         } else {
-          if (this.state.selectedGrid[y][x] !== null) {
+          if (this.getRenderGridCell(selectedGrid, { x, y }) !== null) {
             cursor = 'grabbing'
             movingSelectionPosition = { x, y }
             movingSelection = true
@@ -309,22 +330,33 @@ export default class Canvas extends Component<IProps, IState> {
           }
 
           if (
-            selectedGrid[selectedRect.start.y][selectedRect.start.x] !== null
+            this.getRenderGridCell(selectedGrid, {
+              y: selectedRect.start.y,
+              x: selectedRect.start.x
+            }) !== null
           ) {
             for (let y: number = start.y; y <= end.y; y++) {
               for (let x: number = start.x; x <= end.x; x++) {
-                if (selectedGrid[y][x] !== null) {
-                  renderGrid[y][x] = selectedGrid[y][x]
-                  selectedGrid[y][x] = null
+                if (this.getRenderGridCell(selectedGrid, { x, y }) !== null) {
+                  this.setRenderGridCell(
+                    renderGrid,
+                    { x, y },
+                    this.getRenderGridCell(selectedGrid, { x, y })
+                  )
+                  this.setRenderGridCell(selectedGrid, { x, y }, null)
                 }
               }
             }
           } else {
             for (let y: number = start.y; y <= end.y; y++) {
               for (let x: number = start.x; x <= end.x; x++) {
-                if (renderGrid[y][x] !== null) {
-                  selectedGrid[y][x] = renderGrid[y][x]
-                  renderGrid[y][x] = null
+                if (this.getRenderGridCell(renderGrid, { x, y }) !== null) {
+                  this.setRenderGridCell(
+                    selectedGrid,
+                    { x, y },
+                    this.getRenderGridCell(renderGrid, { x, y })
+                  )
+                  this.setRenderGridCell(renderGrid, { x, y }, null)
                 }
               }
             }
@@ -334,7 +366,7 @@ export default class Canvas extends Component<IProps, IState> {
         selectedRect.start.x = -1
 
         if (!this.state.ctrlDown) {
-          if (this.state.selectedGrid[y][x] !== null) {
+          if (this.getRenderGridCell(selectedGrid, { x, y }) !== null) {
             cursor = 'grab'
           } else {
             cursor = 'crosshair'
@@ -458,6 +490,52 @@ export default class Canvas extends Component<IProps, IState> {
       }
     }
     return firstLayer
+  }
+
+  findChangesInGrid(grid: Grid, nextGrid: Grid): GridChanges {
+    return {
+      addTop: grid.start.y - nextGrid.start.y,
+      addBottom: nextGrid.height - grid.height,
+      addLeft: grid.start.x - nextGrid.start.x,
+      addRight: nextGrid.width - grid.width
+    }
+  }
+
+  changeGridSize(
+    renderGrid: RenderGrid,
+    grid: Grid,
+    gridChanges: GridChanges
+  ): RenderGrid {
+    let newRenderGrid: RenderGrid = [...renderGrid]
+    const { addTop = 0, addBottom = 0, addLeft = 0, addRight = 0 } = gridChanges
+    const leftOffset: number = this.gridOffset.x - grid.start.x + addLeft
+    const topOffset: number = this.gridOffset.y - grid.start.y + addTop
+
+    if (addTop > 0 && topOffset > 0) {
+      const emptyRow: RenderGridElement[] = []
+      for (let i = 0; i < renderGrid[0].length; i++) {
+        emptyRow.push(null)
+      }
+      const emptyRows: RenderGrid = []
+      for (let i = 0; i < addTop; i++) {
+        emptyRows.push(emptyRow.slice())
+      }
+      newRenderGrid = emptyRows.concat(newRenderGrid)
+    }
+
+    if (addBottom > 0) {
+      const emptyRow: RenderGridElement[] = []
+      for (let i = 0; i < renderGrid[0].length; i++) {
+        emptyRow.push(null)
+      }
+      const emptyRows: RenderGrid = []
+      for (let i = 0; i < addBottom; i++) {
+        emptyRows.push(emptyRow.slice())
+      }
+      newRenderGrid = newRenderGrid.concat(emptyRows)
+    }
+
+    return newRenderGrid
   }
 
   updateMainLayer(renderGrid: RenderGrid) {
@@ -641,21 +719,13 @@ export default class Canvas extends Component<IProps, IState> {
       this.ctx.beginPath()
 
       const stepSizeX: number = this.props.width / grid.width
-      for (
-        let x: number = stepSizeX * grid.start.x;
-        x <= this.props.width;
-        x += stepSizeX
-      ) {
+      for (let x: number = 0; x <= this.props.width; x += stepSizeX) {
         this.ctx.moveTo(x, 0)
         this.ctx.lineTo(x, this.props.height)
       }
 
       const stepSizeY: number = this.props.height / grid.height
-      for (
-        let y: number = stepSizeY * grid.start.y;
-        y <= this.props.height;
-        y += stepSizeY
-      ) {
+      for (let y: number = 0; y <= this.props.height; y += stepSizeY) {
         this.ctx.moveTo(0, y)
         this.ctx.lineTo(this.props.width, y)
       }
@@ -677,10 +747,60 @@ export default class Canvas extends Component<IProps, IState> {
       '0'}, ${color.opacity || '1'})`
   }
 
+  getRenderGridCell(
+    renderGrid: RenderGrid,
+    position: Point,
+    offset: Point = this.props.grid.start
+  ): RenderGridElement {
+    const coords: Point = {
+      x: position.x + offset.x - this.gridOffset.x,
+      y: position.y + offset.y - this.gridOffset.y
+    }
+    if (
+      coords.x >= 0 &&
+      coords.x < renderGrid[0].length &&
+      coords.y >= 0 &&
+      coords.y < renderGrid.length
+    ) {
+      return renderGrid[coords.y][coords.x]
+    }
+    return null
+  }
+
+  setRenderGridCell(
+    renderGrid: RenderGrid,
+    position: Point,
+    value: RenderGridElement = null,
+    offset: Point = this.props.grid.start
+  ) {
+    const coords: Point = {
+      x: position.x + offset.x - this.gridOffset.x,
+      y: position.y + offset.y - this.gridOffset.y
+    }
+    if (
+      coords.x >= 0 &&
+      coords.x < renderGrid[0].length &&
+      coords.y >= 0 &&
+      coords.y < renderGrid.length
+    ) {
+      renderGrid[coords.y][coords.x] = value
+    }
+  }
+
   drawMasks(grid: Grid, renderGrid: RenderGrid, outline: boolean = false) {
     if (this.ctx !== null) {
       const stepSizeX: number = this.props.width / grid.width
       const stepSizeY: number = this.props.height / grid.height
+
+      const start: Point = {
+        x: grid.start.x,
+        y: grid.start.y
+      }
+
+      const end: Point = {
+        x: grid.width,
+        y: grid.height
+      }
 
       if (outline) {
         this.ctx.lineWidth = this.lineWidth
@@ -689,9 +809,9 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.strokeStyle = '#000'
 
         this.ctx.beginPath()
-        for (let x: number = 0; x < grid.width; x++) {
-          for (let y: number = 0; y < grid.height; y++) {
-            if (renderGrid[y][x] !== null) {
+        for (let x: number = 0; x < end.x; x++) {
+          for (let y: number = 0; y < end.y; y++) {
+            if (this.getRenderGridCell(renderGrid, { x, y }, start) !== null) {
               this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
             }
           }
@@ -702,9 +822,9 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.strokeStyle = '#ddd'
         this.ctx.beginPath()
 
-        for (let x: number = 0; x < grid.width; x++) {
-          for (let y: number = 0; y < grid.height; y++) {
-            if (renderGrid[y][x] !== null) {
+        for (let x: number = 0; x < end.x; x++) {
+          for (let y: number = 0; y < end.y; y++) {
+            if (this.getRenderGridCell(renderGrid, { x, y }, start) !== null) {
               this.ctx.rect(x * stepSizeX, y * stepSizeY, stepSizeX, stepSizeY)
             }
           }
@@ -714,10 +834,12 @@ export default class Canvas extends Component<IProps, IState> {
       }
 
       this.ctx.beginPath()
-      for (let x: number = 0; x < grid.width; x++) {
-        for (let y: number = 0; y < grid.height; y++) {
-          if (renderGrid[y][x] !== null) {
-            const currentColor: string = this.generateColor(renderGrid[y][x])
+      for (let x: number = 0; x < end.x; x++) {
+        for (let y: number = 0; y < end.y; y++) {
+          if (this.getRenderGridCell(renderGrid, { x, y }, start) !== null) {
+            const currentColor: string = this.generateColor(
+              this.getRenderGridCell(renderGrid, { x, y }, start)
+            )
             if (this.ctx.fillStyle !== currentColor) {
               this.ctx.fill()
               this.ctx.beginPath()

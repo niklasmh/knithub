@@ -48,6 +48,16 @@ class App extends Component<IProps, IState> {
     this.setState({ ...this.state, color })
   }
 
+  changeGrid(grid: Grid) {
+    const layers: Layer[] = this.state.layers
+    const layer: Layer = { ...layers[0] }
+    layers[0] = {
+      ...layer,
+      grid
+    }
+    this.setState({ ...this.state, layers })
+  }
+
   transformation(operation: Transformation) {
     if (this.canvas.current !== null) {
       this.canvas.current.transformation(operation)
@@ -120,6 +130,8 @@ class App extends Component<IProps, IState> {
       <div className="App">
         <Toolbar
           mode={mode}
+          grid={grid}
+          changeGrid={(grid: Grid) => this.changeGrid(grid)}
           transformation={(operation: Transformation) =>
             this.transformation(operation)
           }
