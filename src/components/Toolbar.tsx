@@ -19,7 +19,17 @@ interface IProps {
   transformation(operation: Transformation): void
 }
 
-export default class Toolbar extends Component<IProps, {}> {
+interface IState {
+  showHelp: boolean
+}
+
+export default class Toolbar extends Component<IProps, IState> {
+  constructor(props: IProps) {
+    super(props)
+    this.state = {
+      showHelp: false
+    }
+  }
   transformation(type: string) {
     switch (type) {
       case 'FLIP_X':
@@ -79,6 +89,10 @@ export default class Toolbar extends Component<IProps, {}> {
       ...this.props.settings,
       gridColor: { value: evt.target.value }
     })
+  }
+
+  showHelp() {
+    this.setState({ ...this.state, showHelp: !this.state.showHelp })
   }
 
   render() {
@@ -184,10 +198,35 @@ export default class Toolbar extends Component<IProps, {}> {
             className={this.props.mode === Modes.SELECT ? 'selected' : ''}
             onClick={() => this.props.changeMode(Modes.SELECT)}
           >
-            Velg område
+            Marker område
           </button>
           {this.props.mode === Modes.SELECT && selectSettings}
         </div>
+        <button
+          className={this.state.showHelp ? ' selected' : ''}
+          onClick={this.showHelp.bind(this)}
+          title="Info"
+        >
+          ⓘ
+        </button>
+        {this.state.showHelp ? (
+          <p className="help">
+            <b>Ctrl + marker:</b> <i>Legg nytt område til eksisterende</i>
+            <br />
+            <b>Ctrl + C:</b> <i>Kopier område</i>
+            <br />
+            <b>Ctrl + V:</b> <i>Lim inn (fra kopi)</i>
+            <br />
+            <b>Del:</b> <i>Fjern område</i>
+            <br />
+            <b>+:</b> <i>Zoom inn</i>
+            <br />
+            <b>-:</b> <i>Zoom ut</i>
+            <br />
+            <b>Piler(←↑→↓):</b> <i>Flytt område / rutenett</i>
+            <br />
+          </p>
+        ) : null}
       </div>
     )
   }

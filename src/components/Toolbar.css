@@ -59,3 +59,11 @@ input[type='number'] {
   flex-flow: nowrap row;
   align-items: center;
 }
+
+.help {
+  padding: 16px;
+  margin: 0;
+  font-size: 0.9em;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
