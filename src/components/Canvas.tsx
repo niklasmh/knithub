@@ -875,6 +875,28 @@ export default class Canvas extends Component<IProps, IState> {
         this.ctx.moveTo(0, y)
         this.ctx.lineTo(this.props.width, y)
       }
+      this.ctx.stroke()
+
+      this.ctx.beginPath()
+      this.ctx.lineWidth = width * 2
+      const steps: number = 5
+      for (
+        let x: number = -(grid.start.x % steps) * stepSizeX;
+        x <= this.props.width;
+        x += stepSizeX * steps
+      ) {
+        this.ctx.moveTo(x, 0)
+        this.ctx.lineTo(x, this.props.height)
+      }
+
+      for (
+        let y: number = -(grid.start.y % steps) * stepSizeY;
+        y <= this.props.height;
+        y += stepSizeY * steps
+      ) {
+        this.ctx.moveTo(0, y)
+        this.ctx.lineTo(this.props.width, y)
+      }
 
       this.ctx.stroke()
     }
