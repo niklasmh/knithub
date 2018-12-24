@@ -122,6 +122,9 @@ export default class Canvas extends Component<IProps, IState> {
           cursor = 'default'
       }
     }
+    if (nextProps.scale !== this.props.scale) {
+      this.lineWidth = Math.max(2, nextProps.scale.x / 10)
+    }
     this.gridOffset = {
       x: Math.min(this.gridOffset.x, nextProps.grid.start.x),
       y: Math.min(this.gridOffset.y, nextProps.grid.start.y)
