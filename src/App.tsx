@@ -159,6 +159,7 @@ class App extends Component<IProps, IState> {
           color={color}
           layers={layers}
           updateLayers={(layers: Layer[]) => this.updateLayers(layers)}
+          changeGrid={(grid: Grid) => this.changeGrid(grid)}
         />
       </div>
     )

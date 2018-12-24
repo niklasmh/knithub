@@ -106,7 +106,7 @@ export default class Toolbar extends Component<IProps, {}> {
             <label htmlFor="count-x">Telling x:</label>
             <input
               id="count-x"
-              defaultValue={grid.width.toString()}
+              value={grid.width.toString()}
               onChange={this.handleGridWidth.bind(this)}
               type="number"
             />
@@ -115,7 +115,7 @@ export default class Toolbar extends Component<IProps, {}> {
             <label htmlFor="count-y">Telling y:</label>
             <input
               id="count-y"
-              defaultValue={grid.height.toString()}
+              value={grid.height.toString()}
               onChange={this.handleGridHeight.bind(this)}
               type="number"
             />
@@ -126,7 +126,7 @@ export default class Toolbar extends Component<IProps, {}> {
             <label htmlFor="start-x">Start x:</label>
             <input
               id="start-x"
-              defaultValue={grid.start.x.toString()}
+              value={grid.start.x.toString()}
               onChange={this.handleGridStartX.bind(this)}
               type="number"
             />
@@ -135,7 +135,7 @@ export default class Toolbar extends Component<IProps, {}> {
             <label htmlFor="start-y">Start y:</label>
             <input
               id="start-y"
-              defaultValue={grid.start.y.toString()}
+              value={grid.start.y.toString()}
               onChange={this.handleGridStartY.bind(this)}
               type="number"
             />

@@ -2,6 +2,46 @@
   display: flex;
 }
 
-.Canvas > canvas {
+.Canvas > .canvas-container {
   margin: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  grid-template-rows: auto 1fr auto 1fr auto;
+  grid-template-areas:
+    '. . top . .'
+    '. canvas-element canvas-element canvas-element .'
+    'left canvas-element canvas-element canvas-element right'
+    '. canvas-element canvas-element canvas-element .'
+    '. . bottom . .';
+}
+
+.Canvas canvas {
+  grid-area: canvas-element;
+}
+
+.Canvas .add {
+  color: #aaa;
+  font-size: 2em;
+  cursor: pointer;
+}
+
+.Canvas .add:hover {
+  color: #ddd;
+  font-weight: bold;
+}
+
+.add-top {
+  grid-area: top;
+}
+
+.add-bottom {
+  grid-area: bottom;
+}
+
+.add-left {
+  grid-area: left;
+}
+
+.add-right {
+  grid-area: right;
 }

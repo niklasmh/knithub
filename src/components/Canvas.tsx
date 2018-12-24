@@ -17,6 +17,7 @@ interface IProps {
   color: Color
   layers: Layer[]
   updateLayers(layers: Layer[]): void
+  changeGrid(grid: Grid): void
 }
 
 export type RenderGridElement = Color | null
@@ -462,6 +463,38 @@ export default class Canvas extends Component<IProps, IState> {
         }
         break
     }
+  }
+
+  addGridStartX() {
+    const grid: Grid = { ...this.props.grid }
+    const start: Point = {
+      x: grid.start.x - 1,
+      y: grid.start.y
+    }
+    grid.width += 1
+    this.props.changeGrid({ ...grid, start })
+  }
+
+  addGridWidth() {
+    const grid: Grid = { ...this.props.grid }
+    grid.width += 1
+    this.props.changeGrid(grid)
+  }
+
+  addGridStartY() {
+    const grid: Grid = { ...this.props.grid }
+    const start: Point = {
+      x: grid.start.x,
+      y: grid.start.y - 1
+    }
+    grid.height += 1
+    this.props.changeGrid({ ...grid, start })
+  }
+
+  addGridHeight() {
+    const grid: Grid = { ...this.props.grid }
+    grid.height += 1
+    this.props.changeGrid(grid)
   }
 
   mergeLayers(
@@ -967,19 +1000,36 @@ export default class Canvas extends Component<IProps, IState> {
 
     return (
       <div className="Canvas">
-        <canvas
-          style={style}
-          ref={e => (this.canvas = e)}
-          width={width}
-          height={height}
-          onMouseMove={this.handleMouseMove.bind(this)}
-          onMouseEnter={this.handleMouseEnter.bind(this)}
-          onMouseLeave={this.handleMouseExit.bind(this)}
-          onMouseOut={this.handleMouseExit.bind(this)}
-          onMouseDown={this.handleMouseDown.bind(this)}
-          onMouseUp={this.handleMouseUp.bind(this)}
-          onContextMenu={this.handleRightClick.bind(this)}
-        />
+        <div className="canvas-container">
+          <div onClick={this.addGridStartX.bind(this)} className="add add-left">
+            +
+          </div>
+          <div onClick={this.addGridWidth.bind(this)} className="add add-right">
+            +
+          </div>
+          <div onClick={this.addGridStartY.bind(this)} className="add add-top">
+            +
+          </div>
+          <div
+            onClick={this.addGridHeight.bind(this)}
+            className="add add-bottom"
+          >
+            +
+          </div>
+          <canvas
+            style={style}
+            ref={e => (this.canvas = e)}
+            width={width}
+            height={height}
+            onMouseMove={this.handleMouseMove.bind(this)}
+            onMouseEnter={this.handleMouseEnter.bind(this)}
+            onMouseLeave={this.handleMouseExit.bind(this)}
+            onMouseOut={this.handleMouseExit.bind(this)}
+            onMouseDown={this.handleMouseDown.bind(this)}
+            onMouseUp={this.handleMouseUp.bind(this)}
+            onContextMenu={this.handleRightClick.bind(this)}
+          />
+        </div>
       </div>
     )
   }
