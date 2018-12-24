@@ -46,6 +46,7 @@ interface IState {
   drawColor: RenderGridElement
   selectedRect: Rect
   selectedGrid: RenderGrid
+  copyGrid: RenderGrid
   movingSelection: boolean
   movingSelectionPosition: Point
   mousePosition: Point
@@ -101,6 +102,7 @@ export default class Canvas extends Component<IProps, IState> {
       drawColor: props.color,
       selectedRect: { start: { x: -1, y: -1 }, end: { x: -1, y: -1 } },
       selectedGrid,
+      copyGrid: selectedGrid,
       mousePosition: { x: -1, y: -1 },
       movingSelection: false,
       movingSelectionPosition: { x: -1, y: -1 },
@@ -508,6 +510,18 @@ export default class Canvas extends Component<IProps, IState> {
           this.deleteSelection()
         }
         break
+      case 67: // C
+        if (this.props.mode === Modes.SELECT && this.state.ctrlDown) {
+          evt.preventDefault()
+          this.copySelection()
+        }
+        break
+      case 86: // V
+        if (this.props.mode === Modes.SELECT && this.state.ctrlDown) {
+          evt.preventDefault()
+          this.pasteSelection()
+        }
+        break
       case 187: // +
         if (!this.state.ctrlDown) {
           evt.preventDefault()
@@ -715,6 +729,29 @@ export default class Canvas extends Component<IProps, IState> {
     )
     this.isSelected = false
     this.setState({ ...this.state, selectedGrid })
+  }
+
+  copySelection(grid: RenderGrid = this.state.selectedGrid) {
+    const copyGrid: RenderGrid = grid.map((e: RenderGridElement[]) => e.slice())
+    this.setState({ ...this.state, copyGrid })
+  }
+
+  pasteSelection(grid: RenderGrid = this.state.selectedGrid) {
+    this.mergeLayers(this.state.renderGrid, true, grid)
+    const emptyRow: RenderGridElement[] = []
+    for (let i: number = 0; i < this.state.copyGrid.length; i++) {
+      emptyRow.push(null)
+    }
+    const copyGrid: RenderGrid = [emptyRow].concat(this.state.copyGrid)
+    for (let i: number = 0; i < copyGrid.length; i++) {
+      copyGrid[i] = [null as RenderGridElement].concat(copyGrid[i])
+    }
+    this.mergeLayers(grid, false, copyGrid)
+    this.setState({
+      ...this.state,
+      renderGrid: this.state.renderGrid,
+      selectedGrid: grid
+    })
   }
 
   public transformation(operation: Transformation) {
