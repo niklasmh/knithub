@@ -1,4 +1,5 @@
 .Canvas {
+  outline: none;
   display: flex;
 }
 

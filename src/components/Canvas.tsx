@@ -55,9 +55,11 @@ interface IState {
 
 export default class Canvas extends Component<IProps, IState> {
   public canvas: any = null
+  public canvasContainer: any = null
   public ctx: CanvasRenderingContext2D | null = null
   private showControlPoints: boolean = false
   private lineWidth: number
+  private isSelected: boolean = false
   private gridOffset: Point = { x: 0, y: 0 }
 
   constructor(props: IProps) {
@@ -82,8 +84,6 @@ export default class Canvas extends Component<IProps, IState> {
       }
       selectedGrid.push(row)
     }
-
-    renderGrid[2][2] = { value: 'green' }
 
     const layers: Layer[] = props.layers
     layers[0].renderGrid = renderGrid
@@ -134,13 +134,21 @@ export default class Canvas extends Component<IProps, IState> {
       nextProps.grid,
       gridChanges
     )
-    this.setState({ ...this.state, cursor, layers, renderGrid })
+    const selectedGrid: RenderGrid = this.changeGridSize(
+      this.state.selectedGrid,
+      nextProps.grid,
+      gridChanges
+    )
+    this.setState({ ...this.state, cursor, layers, renderGrid, selectedGrid })
   }
 
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d')
-    document.addEventListener('keydown', this.handleKeyDown.bind(this))
-    document.addEventListener('keyup', this.handleKeyUp.bind(this))
+    this.canvasContainer.addEventListener(
+      'keydown',
+      this.handleKeyDown.bind(this)
+    )
+    this.canvasContainer.addEventListener('keyup', this.handleKeyUp.bind(this))
     this.draw()
   }
 
@@ -151,8 +159,14 @@ export default class Canvas extends Component<IProps, IState> {
   componentWillUnmount() {
     this.canvas = null
     this.ctx = null
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this))
-    document.removeEventListener('keyup', this.handleKeyUp.bind(this))
+    this.canvasContainer.removeEventListener(
+      'keydown',
+      this.handleKeyDown.bind(this)
+    )
+    this.canvasContainer.removeEventListener(
+      'keyup',
+      this.handleKeyUp.bind(this)
+    )
   }
 
   getPositionFromMouse(evt: any): Point {
@@ -273,6 +287,7 @@ export default class Canvas extends Component<IProps, IState> {
           cursor = 'copy'
         } else {
           if (this.getRenderGridCell(selectedGrid, { x, y }) !== null) {
+            this.isSelected = true
             cursor = 'grabbing'
             movingSelectionPosition = { x, y }
             movingSelection = true
@@ -295,6 +310,8 @@ export default class Canvas extends Component<IProps, IState> {
         mouseDown: true,
         mouseDownPosition: { x, y }
       })
+
+      this.isSelected = !this.checkIfGridIsEmpty(selectedGrid)
     }
   }
 
@@ -387,7 +404,20 @@ export default class Canvas extends Component<IProps, IState> {
         mouseDown: false,
         mouseUpPosition: { x, y }
       })
+
+      this.isSelected = !this.checkIfGridIsEmpty(selectedGrid)
     }
+  }
+
+  checkIfGridIsEmpty(renderGrid: RenderGrid): boolean {
+    for (let y: number = 0; y < renderGrid.length; y++) {
+      for (let x: number = 0; x < renderGrid[0].length; x++) {
+        if (renderGrid[y][x] !== null) {
+          return false
+        }
+      }
+    }
+    return true
   }
 
   handleRightClick(evt: any) {
@@ -408,7 +438,7 @@ export default class Canvas extends Component<IProps, IState> {
         break
       case 37: // Left
         evt.preventDefault()
-        if (~this.state.selectedRect.start.x) {
+        if (this.isSelected) {
           this.moveSelection({ x: -1, y: 0 })
         } else {
           const grid: Grid = { ...this.props.grid }
@@ -423,7 +453,7 @@ export default class Canvas extends Component<IProps, IState> {
         break
       case 38: // Up
         evt.preventDefault()
-        if (~this.state.selectedRect.start.x) {
+        if (this.isSelected) {
           this.moveSelection({ x: 0, y: -1 })
         } else {
           const grid: Grid = { ...this.props.grid }
@@ -438,7 +468,7 @@ export default class Canvas extends Component<IProps, IState> {
         break
       case 39: // Right
         evt.preventDefault()
-        if (~this.state.selectedRect.start.x) {
+        if (this.isSelected) {
           this.moveSelection({ x: 1, y: 0 })
         } else {
           const grid: Grid = { ...this.props.grid }
@@ -453,7 +483,7 @@ export default class Canvas extends Component<IProps, IState> {
         break
       case 40: // Down
         evt.preventDefault()
-        if (~this.state.selectedRect.start.x) {
+        if (this.isSelected) {
           this.moveSelection({ x: 0, y: 1 })
         } else {
           const grid: Grid = { ...this.props.grid }
@@ -657,6 +687,7 @@ export default class Canvas extends Component<IProps, IState> {
     const selectedGrid: RenderGrid = grid.map((e: RenderGridElement[]) =>
       e.map(() => null)
     )
+    this.isSelected = false
     this.setState({ ...this.state, selectedGrid })
   }
 
@@ -1056,7 +1087,11 @@ export default class Canvas extends Component<IProps, IState> {
     const style: any = { cursor }
 
     return (
-      <div className="Canvas">
+      <div
+        className="Canvas"
+        ref={e => (this.canvasContainer = e)}
+        tabIndex={1}
+      >
         <div className="canvas-container">
           <div onClick={this.addGridStartX.bind(this)} className="add add-left">
             +
