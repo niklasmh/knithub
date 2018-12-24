@@ -71,6 +71,7 @@ export default class Toolbar extends Component<IProps, {}> {
       <>
         <input
           type="color"
+          defaultValue="#dddddd"
           onChange={evt => this.props.changeColor({ value: evt.target.value })}
         />
       </>
