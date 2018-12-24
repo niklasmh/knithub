@@ -407,27 +407,63 @@ export default class Canvas extends Component<IProps, IState> {
         }
         break
       case 37: // Left
-        if (this.props.mode === Modes.SELECT) {
-          evt.preventDefault()
+        evt.preventDefault()
+        if (~this.state.selectedRect.start.x) {
           this.moveSelection({ x: -1, y: 0 })
+        } else {
+          const grid: Grid = { ...this.props.grid }
+          this.props.changeGrid({
+            ...grid,
+            start: {
+              x: grid.start.x - 1,
+              y: grid.start.y
+            }
+          })
         }
         break
       case 38: // Up
-        if (this.props.mode === Modes.SELECT) {
-          evt.preventDefault()
+        evt.preventDefault()
+        if (~this.state.selectedRect.start.x) {
           this.moveSelection({ x: 0, y: -1 })
+        } else {
+          const grid: Grid = { ...this.props.grid }
+          this.props.changeGrid({
+            ...grid,
+            start: {
+              x: grid.start.x,
+              y: grid.start.y - 1
+            }
+          })
         }
         break
       case 39: // Right
-        if (this.props.mode === Modes.SELECT) {
-          evt.preventDefault()
+        evt.preventDefault()
+        if (~this.state.selectedRect.start.x) {
           this.moveSelection({ x: 1, y: 0 })
+        } else {
+          const grid: Grid = { ...this.props.grid }
+          this.props.changeGrid({
+            ...grid,
+            start: {
+              x: grid.start.x + 1,
+              y: grid.start.y
+            }
+          })
         }
         break
       case 40: // Down
-        if (this.props.mode === Modes.SELECT) {
-          evt.preventDefault()
+        evt.preventDefault()
+        if (~this.state.selectedRect.start.x) {
           this.moveSelection({ x: 0, y: 1 })
+        } else {
+          const grid: Grid = { ...this.props.grid }
+          this.props.changeGrid({
+            ...grid,
+            start: {
+              x: grid.start.x,
+              y: grid.start.y + 1
+            }
+          })
         }
         break
       case 46: // Delete
@@ -528,9 +564,10 @@ export default class Canvas extends Component<IProps, IState> {
   findChangesInGrid(grid: Grid, nextGrid: Grid): GridChanges {
     return {
       addTop: grid.start.y - nextGrid.start.y,
-      addBottom: nextGrid.height - grid.height,
+      addBottom:
+        nextGrid.height - grid.height + nextGrid.start.y - grid.start.y,
       addLeft: grid.start.x - nextGrid.start.x,
-      addRight: nextGrid.width - grid.width
+      addRight: nextGrid.width - grid.width + nextGrid.start.x - grid.start.x
     }
   }
 
