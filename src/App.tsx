@@ -18,6 +18,15 @@ interface IState {
   mode: Modes
   color: Color
   layers: Layer[]
+  settings: Settings
+}
+
+export interface Settings {
+  gridColor: Color
+  showGrid: boolean
+  lineWidth: number
+  invertColors: boolean
+  hueRotation: number
 }
 
 export type Scale = [number, number]
@@ -30,15 +39,22 @@ class App extends Component<IProps, IState> {
 
     const grid: Grid = {
       start: { x: 0, y: 0 },
-      width: 80,
-      height: 40
+      width: 40,
+      height: 20
     }
 
     this.state = {
-      scale: [10, 10],
+      scale: [20, 20],
       mode: Modes.DRAW,
       color: { value: 'white' },
-      layers: [{ grid, selected: true }]
+      layers: [{ grid, selected: true }],
+      settings: {
+        gridColor: { value: '#8800aa' },
+        showGrid: true,
+        lineWidth: 1,
+        invertColors: false,
+        hueRotation: 0
+      }
     }
   }
 
@@ -122,12 +138,17 @@ class App extends Component<IProps, IState> {
     this.setState({ ...this.state, scale })
   }
 
+  changeSettings(settings: Settings) {
+    this.setState({ ...this.state, settings })
+  }
+
   render() {
     const {
       scale: [width, height],
       mode,
       color,
-      layers
+      layers,
+      settings
     } = this.state
 
     const grid: Grid = layers[0].grid
@@ -137,12 +158,14 @@ class App extends Component<IProps, IState> {
         <Toolbar
           mode={mode}
           grid={grid}
+          settings={settings}
           changeGrid={(grid: Grid) => this.changeGrid(grid)}
           transformation={(operation: Transformation) =>
             this.transformation(operation)
           }
           changeColor={(color: Color) => this.changeColor(color)}
           changeMode={(mode: Modes) => this.changeMode(mode)}
+          changeSettings={(settings: Settings) => this.changeSettings(settings)}
         />
         {/*<Layers
           layers={layers}
@@ -163,6 +186,7 @@ class App extends Component<IProps, IState> {
           grid={grid}
           mode={mode}
           color={color}
+          settings={settings}
           layers={layers}
           updateLayers={(layers: Layer[]) => this.updateLayers(layers)}
           changeGrid={(grid: Grid) => this.changeGrid(grid)}

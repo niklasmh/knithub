@@ -5,14 +5,17 @@ import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Grid } from '../models/grid'
 import { Point } from '../models/point'
+import { Settings } from '../App'
 import { Transformation, Transformations } from '../models/transformations'
 
 interface IProps {
   mode: Modes
   grid: Grid
+  settings: Settings
   changeMode(mode: Modes): void
   changeColor(color: Color): void
   changeGrid(grid: Grid): void
+  changeSettings(settings: Settings): void
   transformation(operation: Transformation): void
 }
 
@@ -64,8 +67,22 @@ export default class Toolbar extends Component<IProps, {}> {
     this.props.changeGrid({ ...grid, start })
   }
 
+  handleShowGrid(evt: any) {
+    this.props.changeSettings({
+      ...this.props.settings,
+      showGrid: evt.target.checked
+    })
+  }
+
+  handleGridColor(evt: any) {
+    this.props.changeSettings({
+      ...this.props.settings,
+      gridColor: { value: evt.target.value }
+    })
+  }
+
   render() {
-    const { grid } = this.props
+    const { grid, settings } = this.props
 
     const drawSettings: any = (
       <>
@@ -85,23 +102,26 @@ export default class Toolbar extends Component<IProps, {}> {
         </button>
       </>
     )
-
-    return (
-      <div className="Toolbar">
-        <button
-          className={this.props.mode === Modes.DRAW ? 'selected' : ''}
-          onClick={() => this.props.changeMode(Modes.DRAW)}
-        >
-          Draw
-        </button>
-        <button
-          className={this.props.mode === Modes.SELECT ? 'selected' : ''}
-          onClick={() => this.props.changeMode(Modes.SELECT)}
-        >
-          Select
-        </button>
-        {this.props.mode === Modes.DRAW && drawSettings}
-        {this.props.mode === Modes.SELECT && selectSettings}
+    const generalSettings: any = (
+      <>
+        <div className="input-group">
+          <div className="input-element">
+            <label htmlFor="show-grid">Vis rutenett</label>
+            <input
+              id="show-grid"
+              defaultChecked={settings.showGrid}
+              onChange={this.handleShowGrid.bind(this)}
+              type="checkbox"
+            />
+          </div>
+          <div className="input-element">
+            <input
+              type="color"
+              defaultValue={settings.gridColor.value}
+              onChange={this.handleGridColor.bind(this)}
+            />
+          </div>
+        </div>
         <div className="input-group">
           <div className="input-element">
             <label htmlFor="count-x">Telling x:</label>
@@ -122,6 +142,26 @@ export default class Toolbar extends Component<IProps, {}> {
             />
           </div>
         </div>
+      </>
+    )
+
+    return (
+      <div className="Toolbar">
+        {generalSettings}
+        <button
+          className={this.props.mode === Modes.DRAW ? 'selected' : ''}
+          onClick={() => this.props.changeMode(Modes.DRAW)}
+        >
+          Tegn
+        </button>
+        <button
+          className={this.props.mode === Modes.SELECT ? 'selected' : ''}
+          onClick={() => this.props.changeMode(Modes.SELECT)}
+        >
+          Velg område
+        </button>
+        {this.props.mode === Modes.DRAW && drawSettings}
+        {this.props.mode === Modes.SELECT && selectSettings}
       </div>
     )
   }

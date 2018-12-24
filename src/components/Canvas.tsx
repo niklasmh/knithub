@@ -6,7 +6,7 @@ import { Layer } from '../models/layer'
 import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Point } from '../models/point'
-import { Scale } from '../App'
+import { Scale, Settings } from '../App'
 import { Transformation, Transformations } from '../models/transformations'
 
 interface IProps {
@@ -16,6 +16,7 @@ interface IProps {
   height: number
   scale: Point
   color: Color
+  settings: Settings
   layers: Layer[]
   updateLayers(layers: Layer[]): void
   changeGrid(grid: Grid): void
@@ -855,7 +856,7 @@ export default class Canvas extends Component<IProps, IState> {
 
   drawGrid(
     grid: Grid,
-    color: string = '#884400',
+    color: string = this.props.settings.gridColor.value || '#999999',
     width: number = this.lineWidth / 2
   ) {
     if (this.ctx !== null) {
@@ -1120,7 +1121,7 @@ export default class Canvas extends Component<IProps, IState> {
       this.ctx.fillStyle = 'black'
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
       this.drawMasks(this.props.grid, this.state.renderGrid)
-      this.drawGrid(this.props.grid)
+      if (this.props.settings.showGrid) this.drawGrid(this.props.grid)
       this.drawMasks(this.props.grid, this.state.selectedGrid, true)
       this.drawControlPoints()
       this.drawMousePointer()
