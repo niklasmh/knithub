@@ -1141,6 +1141,21 @@ export default class Canvas extends Component<IProps, IState> {
         tabIndex={1}
       >
         <div className="canvas-container">
+          <div className="canvas">
+            <canvas
+              style={style}
+              ref={e => (this.canvas = e)}
+              width={width}
+              height={height}
+              onMouseMove={this.handleMouseMove.bind(this)}
+              onMouseEnter={this.handleMouseEnter.bind(this)}
+              onMouseLeave={this.handleMouseExit.bind(this)}
+              onMouseOut={this.handleMouseExit.bind(this)}
+              onMouseDown={this.handleMouseDown.bind(this)}
+              onMouseUp={this.handleMouseUp.bind(this)}
+              onContextMenu={this.handleRightClick.bind(this)}
+            />
+          </div>
           <div onClick={this.addGridStartX.bind(this)} className="add add-left">
             +
           </div>
@@ -1156,19 +1171,6 @@ export default class Canvas extends Component<IProps, IState> {
           >
             +
           </div>
-          <canvas
-            style={style}
-            ref={e => (this.canvas = e)}
-            width={width}
-            height={height}
-            onMouseMove={this.handleMouseMove.bind(this)}
-            onMouseEnter={this.handleMouseEnter.bind(this)}
-            onMouseLeave={this.handleMouseExit.bind(this)}
-            onMouseOut={this.handleMouseExit.bind(this)}
-            onMouseDown={this.handleMouseDown.bind(this)}
-            onMouseUp={this.handleMouseUp.bind(this)}
-            onContextMenu={this.handleRightClick.bind(this)}
-          />
         </div>
       </div>
     )

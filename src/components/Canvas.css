@@ -16,8 +16,9 @@
     '. . bottom . .';
 }
 
-.Canvas canvas {
+.Canvas .canvas {
   grid-area: canvas-element;
+  overflow: auto;
 }
 
 .Canvas .add {
