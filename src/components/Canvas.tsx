@@ -556,6 +556,16 @@ export default class Canvas extends Component<IProps, IState> {
       newRenderGrid = emptyRows.concat(newRenderGrid)
     }
 
+    if (addLeft > 0 && leftOffset > 0) {
+      const emptyCol: RenderGridElement[] = []
+      for (let i = 0; i < addLeft; i++) {
+        emptyCol.push(null)
+      }
+      for (let i = 0; i < renderGrid.length; i++) {
+        newRenderGrid[i] = emptyCol.concat(newRenderGrid[i])
+      }
+    }
+
     if (addBottom > 0) {
       const emptyRow: RenderGridElement[] = []
       for (let i = 0; i < renderGrid[0].length; i++) {
@@ -566,6 +576,16 @@ export default class Canvas extends Component<IProps, IState> {
         emptyRows.push(emptyRow.slice())
       }
       newRenderGrid = newRenderGrid.concat(emptyRows)
+    }
+
+    if (addRight > 0) {
+      const emptyCol: RenderGridElement[] = []
+      for (let i = 0; i < addRight; i++) {
+        emptyCol.push(null)
+      }
+      for (let i = 0; i < renderGrid.length; i++) {
+        newRenderGrid[i] = newRenderGrid[i].concat(emptyCol)
+      }
     }
 
     return newRenderGrid
