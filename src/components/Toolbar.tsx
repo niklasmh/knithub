@@ -121,26 +121,6 @@ export default class Toolbar extends Component<IProps, {}> {
             />
           </div>
         </div>
-        <div className="input-group">
-          <div className="input-element">
-            <label htmlFor="start-x">Start x:</label>
-            <input
-              id="start-x"
-              value={grid.start.x.toString()}
-              onChange={this.handleGridStartX.bind(this)}
-              type="number"
-            />
-          </div>
-          <div className="input-element">
-            <label htmlFor="start-y">Start y:</label>
-            <input
-              id="start-y"
-              value={grid.start.y.toString()}
-              onChange={this.handleGridStartY.bind(this)}
-              type="number"
-            />
-          </div>
-        </div>
       </div>
     )
   }
