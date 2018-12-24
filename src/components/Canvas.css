@@ -24,6 +24,8 @@
   color: #aaa;
   font-size: 2em;
   cursor: pointer;
+  width: 32px;
+  text-align: center;
 }
 
 .Canvas .add:hover {
