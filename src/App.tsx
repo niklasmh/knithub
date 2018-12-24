@@ -14,11 +14,13 @@ import { Transformation } from './models/transformations'
 interface IProps {}
 
 interface IState {
-  scale: [number, number]
+  scale: Scale
   mode: Modes
   color: Color
   layers: Layer[]
 }
+
+export type Scale = [number, number]
 
 class App extends Component<IProps, IState> {
   private canvas: React.RefObject<Canvas> = React.createRef()
@@ -116,6 +118,10 @@ class App extends Component<IProps, IState> {
     this.setState({ ...this.state, layers })
   }
 
+  changeScale(scale: Scale) {
+    this.setState({ ...this.state, scale })
+  }
+
   render() {
     const {
       scale: [width, height],
@@ -160,6 +166,7 @@ class App extends Component<IProps, IState> {
           layers={layers}
           updateLayers={(layers: Layer[]) => this.updateLayers(layers)}
           changeGrid={(grid: Grid) => this.changeGrid(grid)}
+          changeScale={(scale: Scale) => this.changeScale(scale)}
         />
       </div>
     )

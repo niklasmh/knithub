@@ -6,6 +6,7 @@ import { Layer } from '../models/layer'
 import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Point } from '../models/point'
+import { Scale } from '../App'
 import { Transformation, Transformations } from '../models/transformations'
 
 interface IProps {
@@ -18,6 +19,7 @@ interface IProps {
   layers: Layer[]
   updateLayers(layers: Layer[]): void
   changeGrid(grid: Grid): void
+  changeScale(scale: Scale): void
 }
 
 export type RenderGridElement = Color | null
@@ -500,6 +502,26 @@ export default class Canvas extends Component<IProps, IState> {
         if (this.props.mode === Modes.SELECT) {
           evt.preventDefault()
           this.deleteSelection()
+        }
+        break
+      case 187: // +
+        if (!this.state.ctrlDown) {
+          evt.preventDefault()
+          const scale: Scale = [
+            this.props.scale.x * 1.1,
+            this.props.scale.y * 1.1
+          ]
+          this.props.changeScale(scale)
+        }
+        break
+      case 189: // -
+        if (!this.state.ctrlDown) {
+          evt.preventDefault()
+          const scale: Scale = [
+            this.props.scale.x / 1.1,
+            this.props.scale.y / 1.1
+          ]
+          this.props.changeScale(scale)
         }
         break
     }
