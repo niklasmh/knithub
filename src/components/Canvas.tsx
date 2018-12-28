@@ -6,6 +6,7 @@ import { Layer } from '../models/layer'
 import { Modes } from '../models/modes'
 import { Color } from '../models/color'
 import { Point } from '../models/point'
+import { ImageModel } from '../models/image'
 import { Scale, Settings } from '../App'
 import { Transformation, Transformations } from '../models/transformations'
 
@@ -38,6 +39,11 @@ interface Rect {
   end: Point
 }
 
+interface ImageData {
+  image: any
+  ready: boolean
+}
+
 interface IState {
   cursor: string
   ctrlDown: boolean
@@ -55,16 +61,20 @@ interface IState {
   mouseDown: boolean
   mouseHover: boolean
   layers: Layer[]
+  images: ImageModel[]
 }
 
 export default class Canvas extends Component<IProps, IState> {
   public canvas: any = null
+  public canvasForImages: any[] = []
   public canvasContainer: any = null
   public ctx: CanvasRenderingContext2D | null = null
+  public ctxForImages: (CanvasRenderingContext2D | null)[] = []
   private showControlPoints: boolean = false
   private lineWidth: number
   private isSelected: boolean = false
   private gridOffset: Point = { x: 0, y: 0 }
+  private images: ImageData[] = []
 
   constructor(props: IProps) {
     super(props)
@@ -110,8 +120,60 @@ export default class Canvas extends Component<IProps, IState> {
       mouseDown: false,
       mouseDownPosition: { x: -1, y: -1 },
       mouseUpPosition: { x: -1, y: -1 },
-      layers
+      layers,
+      images: []
     }
+  }
+
+  addImage(
+    src: string,
+    grid: Grid = {
+      start: { x: 0, y: 0 },
+      width: 20,
+      height: 20
+    }
+  ) {
+    const images: ImageModel[] = this.state.images
+    images.push({
+      src,
+      grid
+    })
+    const i: number = images.length - 1
+
+    this.canvasForImages.push(document.createElement('canvas'))
+    this.ctxForImages.push(this.canvasForImages[i].getContext('2d'))
+
+    const data: ImageData = {
+      image: new Image(),
+      ready: false
+    }
+    data.image.src = images[i].src
+    data.image.onload = () => {
+      this.images[i].ready = true
+      const ctx: any = this.ctxForImages[i]
+      ctx.imageSmoothingEnabled = false
+      if (ctx !== null) {
+        ctx.drawImage(
+          data.image,
+          0,
+          0,
+          this.state.images[i].grid.width,
+          this.state.images[i].grid.height
+        )
+      }
+      this.forceUpdate()
+    }
+    this.images.push(data)
+
+    this.setState({ ...this.state, images })
+  }
+
+  moveImage(index: number) {
+    const images: ImageModel[] = this.state.images
+    const image: ImageModel = images[index]
+    image.grid.start = { x: 10, y: 10 }
+    images[index] = image
+    this.setState({ ...this.state, images })
   }
 
   componentWillReceiveProps(nextProps: IProps) {
@@ -152,12 +214,30 @@ export default class Canvas extends Component<IProps, IState> {
 
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d')
+    if (this.ctx !== null) {
+      this.ctx.imageSmoothingEnabled = false
+    }
     this.canvasContainer.addEventListener(
       'keydown',
       this.handleKeyDown.bind(this)
     )
     this.canvasContainer.addEventListener('keyup', this.handleKeyUp.bind(this))
     this.draw()
+    /*this.addImage(
+      'https://pbs.twimg.com/profile_images/378800000532546226/dbe5f0727b69487016ffd67a6689e75a_400x400.jpeg'
+    )
+    this.addImage(
+      'https://www.rd.com/wp-content/uploads/2016/04/01-cat-wants-to-tell-you-laptop.jpg',
+      {
+        start: {
+          x: 20,
+          y: 4
+        },
+        width: 20,
+        height: 20
+
+      }
+    )*/
   }
 
   componentDidUpdate() {
@@ -1153,10 +1233,36 @@ export default class Canvas extends Component<IProps, IState> {
     }
   }
 
+  drawImages() {
+    if (this.ctx !== null) {
+      const stepSizeX: number = this.props.width / this.props.grid.width
+      const stepSizeY: number = this.props.height / this.props.grid.height
+      this.ctx.imageSmoothingEnabled = false
+      for (let i: number = 0; i < this.images.length; i++) {
+        if (this.images[i].ready) {
+          this.ctx.drawImage(
+            this.canvasForImages[i],
+            0,
+            0,
+            this.canvasForImages[i].width,
+            this.canvasForImages[i].height,
+            (this.state.images[i].grid.start.x - this.props.grid.start.x) *
+              stepSizeX,
+            (this.state.images[i].grid.start.y - this.props.grid.start.y) *
+              stepSizeY,
+            this.canvasForImages[i].width * stepSizeX,
+            this.canvasForImages[i].height * stepSizeY
+          )
+        }
+      }
+    }
+  }
+
   draw() {
     if (this.ctx !== null) {
       this.ctx.fillStyle = 'black'
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
+      this.drawImages()
       this.drawMasks(this.props.grid, this.state.renderGrid)
       if (this.props.settings.showGrid) this.drawGrid(this.props.grid)
       this.drawMasks(this.props.grid, this.state.selectedGrid, true)
