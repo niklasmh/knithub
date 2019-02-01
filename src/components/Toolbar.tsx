@@ -91,6 +91,13 @@ export default class Toolbar extends Component<IProps, IState> {
     })
   }
 
+  handleGridBGColor(evt: any) {
+    this.props.changeSettings({
+      ...this.props.settings,
+      gridBGColor: { value: evt.target.value }
+    })
+  }
+
   showHelp() {
     this.setState({ ...this.state, showHelp: !this.state.showHelp })
   }
@@ -147,6 +154,7 @@ export default class Toolbar extends Component<IProps, IState> {
             />
           </div>
           {settings.showGrid ? (
+            <>
             <div className="input-element">
               <label htmlFor="grid-color">Rutenettfarge</label>
               <input
@@ -156,6 +164,16 @@ export default class Toolbar extends Component<IProps, IState> {
                 onChange={this.handleGridColor.bind(this)}
               />
             </div>
+              <div className="input-element">
+                <label htmlFor="grid-bgcolor">Bakgrunnsfarge</label>
+                <input
+                  id="grid-bgcolor"
+                  type="color"
+                  defaultValue={settings.gridBGColor.value}
+                  onChange={this.handleGridBGColor.bind(this)}
+                />
+              </div>
+            </>
           ) : null}
         </div>
         <div className="input-group">

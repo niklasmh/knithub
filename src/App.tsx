@@ -23,6 +23,7 @@ interface IState {
 
 export interface Settings {
   gridColor: Color
+  gridBGColor: Color
   showGrid: boolean
   lineWidth: number
   invertColors: boolean
@@ -50,6 +51,7 @@ class App extends Component<IProps, IState> {
       layers: [{ grid, selected: true }],
       settings: {
         gridColor: { value: '#8800aa' },
+        gridBGColor: { value: '#000000' },
         showGrid: true,
         lineWidth: 1,
         invertColors: false,

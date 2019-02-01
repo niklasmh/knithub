@@ -1260,7 +1260,7 @@ export default class Canvas extends Component<IProps, IState> {
 
   draw() {
     if (this.ctx !== null) {
-      this.ctx.fillStyle = 'black'
+      this.ctx.fillStyle = this.generateColor(this.props.settings.gridBGColor)
       this.ctx.fillRect(0, 0, this.props.width, this.props.height)
       this.drawImages()
       this.drawMasks(this.props.grid, this.state.renderGrid)
